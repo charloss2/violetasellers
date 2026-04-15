@@ -68,6 +68,44 @@
     .carrito-btn:active { background: var(--violet2); }
     .carrito-count { background: var(--pink); color: white; border-radius: 999px; font-size: 11px; font-weight: 800; padding: 1px 6px; min-width: 20px; text-align: center; }
 
+    /* ── MENÚ SANDWICH ── */
+    .menu-btn {
+      background: none; border: none; cursor: pointer; padding: 6px;
+      display: flex; flex-direction: column; gap: 5px; align-items: center; justify-content: center;
+    }
+    .menu-btn span {
+      display: block; width: 22px; height: 2px; background: var(--text); border-radius: 2px;
+      transition: all .25s;
+    }
+    .menu-overlay {
+      display: none; position: fixed; inset: 0; z-index: 800;
+    }
+    .menu-overlay.open { display: block; }
+    .menu-drawer {
+      position: absolute; top: calc(var(--header-h) + 6px); right: 10px;
+      background: white; border-radius: 16px; padding: 8px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.18); min-width: 200px;
+      animation: fadeDown .18s ease;
+    }
+    @keyframes fadeDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+    .menu-header {
+      padding: 10px 14px 8px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 4px;
+    }
+    .menu-nombre { font-weight: 700; font-size: 14px; color: var(--text); }
+    .menu-dni    { font-size: 11px; color: var(--text2); margin-top: 1px; }
+    .menu-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 14px; border-radius: 10px; cursor: pointer;
+      font-size: 14px; font-weight: 500; color: var(--text);
+      transition: background .15s; border: none; background: none;
+      width: 100%; text-align: left; font-family: inherit;
+    }
+    .menu-item:hover { background: var(--bg); }
+    .menu-item.danger { color: #ef4444; }
+    .menu-sep { height: 1px; background: var(--border); margin: 4px 8px; }
+
     /* ── PORTAL: layout dividido ── */
     #scr-portal { height: 100%; overflow: hidden; }
     .split-layout {
@@ -337,10 +375,28 @@
         <div class="header-vend" id="hdr-vend">Cargando...</div>
       </div>
     </div>
-    <button class="carrito-btn" onclick="abrirModal()">
-      🛒 Mi pedido
-      <span class="carrito-count" id="carrito-count">0</span>
-    </button>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button class="carrito-btn" onclick="abrirModal()">
+        🛒 <span class="carrito-count" id="carrito-count">0</span>
+      </button>
+      <button class="menu-btn" onclick="toggleMenu()" id="menu-btn" title="Menú">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Menú sandwich -->
+  <div class="menu-overlay" id="menu-overlay" onclick="cerrarMenu()">
+    <div class="menu-drawer" onclick="e=>e.stopPropagation()">
+      <div class="menu-header">
+        <div class="menu-nombre" id="menu-nombre">—</div>
+        <div class="menu-dni" id="menu-dni"></div>
+      </div>
+      <button class="menu-item" onclick="menuNuevoPedido()">➕ Nuevo pedido</button>
+      <button class="menu-item" onclick="menuVerPedidos()">📋 Mis pedidos</button>
+      <div class="menu-sep"></div>
+      <button class="menu-item danger" onclick="menuCerrarSesion()">🔄 Cambiar de clienta</button>
+    </div>
   </div>
 
   <div class="split-layout">
@@ -453,17 +509,10 @@
     <div class="ok-emoji">🎉</div>
     <div class="ok-titulo">¡Pedido enviado!</div>
     <div class="ok-sub" id="ok-msg">Tu vendedora recibió tu pedido y te va a confirmar el total por WhatsApp en breve. 💜</div>
-    <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
-      <button class="btn-nuevo" onclick="nuevoPedido()" style="background:linear-gradient(135deg,#7c3aed,#ec4899);color:white;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;">
-        ➕ Hacer otro pedido
-      </button>
-      <button class="btn-nuevo" onclick="verMisPedidos()" style="background:#f5f0ff;color:#7c3aed;border:2px solid #e9d5ff;border-radius:12px;padding:14px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;">
-        📋 Ver mis pedidos
-      </button>
-      <button class="btn-nuevo" onclick="cerrarSesion()" style="background:#f3f4f6;color:#6b7280;border:none;border-radius:12px;padding:12px;font-size:14px;font-family:inherit;cursor:pointer;">
-        🔄 Cambiar de clienta
-      </button>
-    </div>
+    <button onclick="menuNuevoPedido()" style="width:100%;padding:14px;background:linear-gradient(135deg,#7c3aed,#ec4899);color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:8px;">
+      ➕ Hacer otro pedido
+    </button>
+    <p style="font-size:12px;color:#9ca3af;margin-top:14px;text-align:center;">Usá el menú ☰ para ver tus pedidos anteriores o cambiar de clienta</p>
   </div>
 </div>
 
@@ -1052,6 +1101,33 @@
       if(cli.direccion) document.getElementById('m-dir').value = cli.direccion;
       toast('✅ Datos cargados automáticamente');
     }catch(e){}
+  }
+
+  // ── MENÚ SANDWICH ──────────────────────────────────────────
+  function toggleMenu(){
+    const o = document.getElementById('menu-overlay');
+    o.classList.toggle('open');
+    // Actualizar nombre en el menú
+    if(o.classList.contains('open') && currentCliente){
+      const nom = currentCliente.nombre && !currentCliente.nombre.startsWith('Cliente ')
+        ? currentCliente.nombre : 'Clienta';
+      document.getElementById('menu-nombre').textContent = nom;
+      document.getElementById('menu-dni').textContent = 'DNI: ' + currentCliente.dni;
+    }
+  }
+  function cerrarMenu(){ document.getElementById('menu-overlay').classList.remove('open'); }
+
+  function menuNuevoPedido(){
+    cerrarMenu();
+    nuevoPedido();
+  }
+  function menuVerPedidos(){
+    cerrarMenu();
+    verMisPedidos();
+  }
+  function menuCerrarSesion(){
+    cerrarMenu();
+    cerrarSesion();
   }
 
   // ── GEOLOCALIZACIÓN ────────────────────────────────────────
