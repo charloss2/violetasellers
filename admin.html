@@ -161,7 +161,6 @@
       <div class="nav-item" onclick="showSec('vendedoras')" data-s="vendedoras"><span class="icon">👥</span>Vendedoras</div>
       <div class="nav-item" onclick="showSec('clientes')" data-s="clientes"><span class="icon">🙍</span>Clientes</div>
       <div class="nav-item" onclick="showSec('catalogo')" data-s="catalogo"><span class="icon">📚</span>Catálogo</div>
-      <div class="nav-item" onclick="showSec('config')" data-s="config"><span class="icon">⚙️</span>Configuración</div>
       <div class="nav-item" onclick="showSec('proveedor')" data-s="proveedor"><span class="icon">📦</span>Pedido Proveedor</div>
     </nav>
     <div class="sidebar-footer">
@@ -348,26 +347,9 @@
 
     <!-- CONFIG -->
     <div class="section" id="sec-config">
-      <div class="page-header"><h2 class="page-title">Configuración</h2><p class="page-sub">Ajustes globales del sistema</p></div>
+      <div class="page-header"><h2 class="page-title">Links del sistema</h2><p class="page-sub">Links para compartir con vendedoras y clientas</p></div>
       <div class="cfg-card">
-        <h3>🗄️ Supabase — Base de datos</h3>
-        <p>Esta configuración aplica a todo el sistema. Las vendedoras y clientes usan el mismo localStorage del dominio.</p>
-        <div class="field"><label>URL del proyecto</label><input type="text" id="cfgUrl" placeholder="https://xxxx.supabase.co"></div>
-        <div class="field"><label>Anon Key</label><input type="text" id="cfgKey" placeholder="eyJhbGc..."></div>
-        <button class="btn-sm primary" onclick="guardarConfig()" style="width:100%;padding:12px;font-size:13px;">Guardar configuración</button>
-        <div id="cfgSt" style="margin-top:10px;font-size:12px;color:var(--text2);"></div>
-      </div>
-      <div class="cfg-card">
-        <h3>📋 SQL para crear tablas</h3>
-        <p>Ejecutá esto en el SQL Editor de Supabase (una sola vez):</p>
-        <details>
-          <summary style="cursor:pointer;color:var(--accent);font-size:13px;font-weight:600;">Ver código SQL ▼</summary>
-          <pre id="sqlCode" style="margin-top:12px;background:var(--bg);border:1px solid var(--border);padding:16px;border-radius:8px;font-size:11px;overflow-x:auto;color:var(--text2);line-height:1.7;white-space:pre-wrap;"></pre>
-          <button class="btn-sm ghost" onclick="copiarSQL()" style="margin-top:8px;">📋 Copiar SQL</button>
-        </details>
-      </div>
-      <div class="cfg-card">
-        <h3>🔗 Links del sistema</h3>
+        <h3>🔗 Links</h3>
         <div style="display:flex;flex-direction:column;gap:10px;">
           <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;"><span style="font-size:12px;color:var(--text2);">🙍 Clientes → <code>cliente.html</code></span><button class="btn-sm ghost" onclick="copyLink('cliente.html')">📋</button></div>
           <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;"><span style="font-size:12px;color:var(--text2);">💼 Vendedoras → <code>vendedora.html</code></span><button class="btn-sm ghost" onclick="copyLink('vendedora.html')">📋</button></div>
@@ -461,8 +443,8 @@
 
 <script>
 const ROOT={user:'root',pass:'Root.415263'};
-const _DEFAULT_SU='https://vangwjxeebbzbqejyzsp.supabase.co',_DEFAULT_SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhbmd3anhlZWJiemJxZWp5enNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxODc2NDgsImV4cCI6MjA5MTc2MzY0OH0.IjFNt8t1-YU4aUOgB-y8UFGAgHqL8qFNOwCIyxCvFj8';
-let SU=_DEFAULT_SU,SK=_DEFAULT_SK;
+const SU='https://vangwjxeebbzbqejyzsp.supabase.co';
+const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhbmd3anhlZWJiemJxZWp5enNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxODc2NDgsImV4cCI6MjA5MTc2MzY0OH0.IjFNt8t1-YU4aUOgB-y8UFGAgHqL8qFNOwCIyxCvFj8';
 let allPeds=[],allVends=[],allClis=[],allProds=[];
 
 function H(){return{'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};}
@@ -703,22 +685,9 @@ async function guardarProdsAI(){
 }
 
 // CONFIG
-function initCfg(){
-  SU=localStorage.getItem('violeta_supa_url')||_DEFAULT_SU;
-  SK=localStorage.getItem('violeta_supa_key')||_DEFAULT_SK;
-  const el_url=document.getElementById('cfgUrl');
-  const el_key=document.getElementById('cfgKey');
-  if(el_url) el_url.value=SU;
-  if(el_key) el_key.value=SK;
-}
-
-function guardarConfig(){
-  const url=document.getElementById('cfgUrl').value.trim();const key=document.getElementById('cfgKey').value.trim();
-  if(!url||!key){toast('Completá URL y Key','err');return;}
-  localStorage.setItem('violeta_supa_url',url);localStorage.setItem('violeta_supa_key',key);
-  SU=url;SK=key;document.getElementById('cfgSt').textContent='✅ Guardado correctamente';toast('✅ Configuración guardada','ok');cargarTodo();
-}
-function copiarSQL(){navigator.clipboard.writeText(document.getElementById('sqlCode').textContent).then(()=>toast('📋 SQL copiado'));}
+function initCfg(){ /* credentials fixed in code — no config needed */ }
+function guardarConfig(){ /* disabled */ }
+function copiarSQL(){navigator.clipboard.writeText(document.getElementById('sqlCode')?.textContent||'').then(()=>toast('📋 SQL copiado'));}
 
   // ── IMPORTAR CATÁLOGO DESDE EXCEL ─────────────────────────────────────────
   function actualizarCampanaXls(val){
