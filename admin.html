@@ -772,6 +772,7 @@ function copiarSQL(){navigator.clipboard.writeText(document.getElementById('sqlC
         const colDetalle = findCol(sample, ['detalle','descripcion_promo','detail','promo_detalle']);
         const colGrupo   = findCol(sample, ['grupo','group','promo_grupo']);
         const colPre2    = findCol(sample, ['precio_promo_2','precio2','promo_2','promo2']);
+        const colPag     = findCol(sample, ['pagina','page','pag']);
         const colCamp    = findCol(sample, ['campana','camp','campaign']);
 
         if(!colCod || !colNom || !colPre){
@@ -798,6 +799,7 @@ function copiarSQL(){navigator.clipboard.writeText(document.getElementById('sqlC
           const pre2Raw      = colPre2    ? String(row[colPre2]||'').trim()    : '';
           const precio_promo_2 = pre2Raw && !isNaN(parseInt(pre2Raw.replace(/[^0-9]/g,'')))
                                 ? parseInt(pre2Raw.replace(/[^0-9]/g,'')) : null;
+          const pagina       = colPag     ? String(row[colPag]||'').trim() || null : null;
 
           const fila_err = [];
           if(!codigo || !/^\d{4,6}$/.test(codigo)) fila_err.push('código inválido');
@@ -807,7 +809,7 @@ function copiarSQL(){navigator.clipboard.writeText(document.getElementById('sqlC
 
           xlsDatosValidados.push({ codigo, nombre, precio: isNaN(precio)?null:precio,
             precio_tachado: isNaN(tachado)?null:tachado, promo_tipo:tipo,
-            promo_detalle:detalle, promo_grupo:grupo, precio_promo_2, campana, _err: fila_err });
+            promo_detalle:detalle, promo_grupo:grupo, precio_promo_2, pagina, campana, _err: fila_err });
           if(fila_err.length) errores.push('Fila '+(i+2)+': '+fila_err.join(', '));
         });
 
@@ -865,6 +867,7 @@ function copiarSQL(){navigator.clipboard.writeText(document.getElementById('sqlC
         promo_detalle: p.promo_detalle||'',
         promo_grupo:   p.promo_grupo||'',
         precio_promo_2:p.precio_promo_2||null,
+        pagina:        p.pagina||null,
         campana:       p.campana
       }));
       try{
@@ -888,7 +891,7 @@ function copiarSQL(){navigator.clipboard.writeText(document.getElementById('sqlC
     // Genera un xlsx vacío con los encabezados correctos
     if(typeof XLSX === 'undefined'){ toast('❌ Librería XLSX no cargada'); return; }
     const wb = XLSX.utils.book_new();
-    const headers = [['codigo','nombre','precio','precio_tachado','promo_tipo','promo_detalle','promo_grupo','precio_promo_2','campana']];
+    const headers = [['codigo','nombre','precio','precio_tachado','promo_tipo','promo_detalle','promo_grupo','precio_promo_2','pagina','campana']];
     const ws = XLSX.utils.aoa_to_sheet(headers);
     ws['!cols'] = [{wch:10},{wch:60},{wch:12},{wch:15},{wch:18},{wch:50},{wch:22},{wch:14},{wch:10}];
     XLSX.utils.book_append_sheet(wb, ws, 'Productos X-XX');
