@@ -578,7 +578,6 @@
   }
 
   async function cargarCatalogo(numCamp){
-    // Intentar múltiples formatos de campaña
     const variantes = [
       'campana=eq.' + encodeURIComponent('Campaña ' + numCamp + '/26'),
       'campana=eq.' + encodeURIComponent(numCamp.padStart(2,'0') + '/26'),
@@ -587,16 +586,27 @@
     try{
       let prods = [];
       for(const q of variantes){
-        prods = await sGet('productos', q + '&order=nombre.asc');
+        // select=* explícito + limit alto para traer todos
+        prods = await sGet('productos', q + '&select=*&limit=1000&order=nombre.asc');
         if(prods.length) break;
       }
       allProductosCli = prods;
       document.getElementById('camp-label').textContent = 'Campaña ' + numCamp + '/26';
-      console.log(`Catálogo cargado: ${prods.length} productos`);
-      // Verificar cuántos tienen pagina
+
+      // Debug visible en pantalla
       const conPag = prods.filter(p => p.pagina).length;
-      console.log(`Con pagina: ${conPag} / Sin pagina: ${prods.length - conPag}`);
-    }catch(e){ console.error('Error cargando catálogo:', e); }
+      console.log(`✅ Catálogo: ${prods.length} productos, ${conPag} con página`);
+      if(prods.length > 0){
+        console.log('Ejemplo producto[0]:', JSON.stringify(prods[0]));
+      }
+
+      // Mostrar debug en pantalla por 5 segundos
+      toast(`📦 ${prods.length} productos · ${conPag} con página`);
+
+    }catch(e){
+      console.error('Error catálogo:', e);
+      toast('❌ Error catálogo: ' + e.message);
+    }
   }
 
   // ── FOLLETO PDF ────────────────────────────────────────────
@@ -694,6 +704,14 @@
     const lista = document.getElementById('productos-lista');
     const titulo = document.getElementById('prods-titulo');
     const countLabel = document.getElementById('prods-count');
+
+    // Debug
+    console.log(`renderProductosDePagina(${numPag}): total catálogo=${allProductosCli.length}, encontrados=${prods.length}`);
+    if(allProductosCli.length > 0 && numPag !== null){
+      // Mostrar qué tiene el primer producto como campo pagina
+      const ej = allProductosCli[0];
+      console.log(`Ejemplo pagina field: "${ej.pagina}" (tipo: ${typeof ej.pagina})`);
+    }
 
     titulo.textContent = numPag ? `Página ${numPag}` : 'Todos los productos';
     countLabel.textContent = prods.length ? `${prods.length} producto${prods.length>1?'s':''}` : '';
