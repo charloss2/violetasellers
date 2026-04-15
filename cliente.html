@@ -419,9 +419,22 @@
     <div class="modal-titulo">Confirmá tu pedido 💜</div>
     <div class="modal-sub">Revisá los productos y completá tus datos</div>
     <div class="resumen-pedido" id="modal-resumen"></div>
+    <div class="campo"><label>DNI (sin puntos)</label>
+      <input type="number" id="m-dni" placeholder="Ej: 30123456" inputmode="numeric"
+        onblur="autocompletarPorDNI(this.value)">
+    </div>
     <div class="campo"><label>Tu nombre</label><input type="text" id="m-nombre" placeholder="Nombre y apellido"></div>
     <div class="campo"><label>Teléfono</label><input type="tel" id="m-tel" placeholder="11 1234-5678" inputmode="numeric"></div>
-    <div class="campo"><label>Dirección de entrega</label><input type="text" id="m-dir" placeholder="Calle, número, piso..."></div>
+    <div class="campo"><label>Dirección de entrega</label>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input type="text" id="m-dir" placeholder="Calle, número, piso..." style="flex:1;">
+        <button onclick="obtenerGeolocalizacion()" title="Usar mi ubicación actual"
+          style="background:#7c3aed;color:white;border:none;border-radius:10px;padding:10px 12px;font-size:16px;cursor:pointer;flex-shrink:0;">
+          📍
+        </button>
+      </div>
+      <div id="geo-estado" style="font-size:11px;color:#6b7280;margin-top:4px;display:none;"></div>
+    </div>
     <div class="campo"><label>Forma de pago</label>
       <select id="m-pago">
         <option value="">— Elegí una opción —</option>
@@ -440,8 +453,28 @@
     <div class="ok-emoji">🎉</div>
     <div class="ok-titulo">¡Pedido enviado!</div>
     <div class="ok-sub" id="ok-msg">Tu vendedora recibió tu pedido y te va a confirmar el total por WhatsApp en breve. 💜</div>
-    <button class="btn-nuevo" onclick="nuevoPedido()">Hacer otro pedido</button>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+      <button class="btn-nuevo" onclick="nuevoPedido()" style="background:linear-gradient(135deg,#7c3aed,#ec4899);color:white;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;">
+        ➕ Hacer otro pedido
+      </button>
+      <button class="btn-nuevo" onclick="verMisPedidos()" style="background:#f5f0ff;color:#7c3aed;border:2px solid #e9d5ff;border-radius:12px;padding:14px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;">
+        📋 Ver mis pedidos
+      </button>
+      <button class="btn-nuevo" onclick="cerrarSesion()" style="background:#f3f4f6;color:#6b7280;border:none;border-radius:12px;padding:12px;font-size:14px;font-family:inherit;cursor:pointer;">
+        🔄 Cambiar de clienta
+      </button>
+    </div>
   </div>
+</div>
+
+<!-- ═══════════════════ PANTALLA MIS PEDIDOS ═══════════════════ -->
+<div class="screen" id="scr-pedidos">
+  <div style="background:linear-gradient(135deg,#7c3aed,#ec4899);padding:20px 16px 16px;color:white;">
+    <button onclick="showScreen('ok')" style="background:rgba(255,255,255,.2);border:none;color:white;border-radius:8px;padding:6px 12px;font-size:13px;cursor:pointer;font-family:inherit;margin-bottom:12px;">← Volver</button>
+    <div style="font-family:'Playfair Display',serif;font-size:20px;">Mis pedidos</div>
+    <div id="pedidos-cliente-nombre" style="font-size:13px;opacity:.8;margin-top:2px;"></div>
+  </div>
+  <div id="pedidos-cliente-lista" style="padding:14px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;flex:1;"></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -893,6 +926,14 @@
   // ── MODAL DATOS ────────────────────────────────────────────
   function abrirModal(){
     if(Object.keys(carrito).length === 0){ toast('Agregá al menos un producto'); return; }
+    // Precargar DNI del cliente actual
+    if(currentCliente?.dni) document.getElementById('m-dni').value = currentCliente.dni;
+    // Precargar datos si ya existen
+    if(currentCliente?.nombre && !currentCliente.nombre.startsWith('Cliente '))
+      document.getElementById('m-nombre').value = currentCliente.nombre;
+    if(currentCliente?.telefono) document.getElementById('m-tel').value = currentCliente.telefono;
+    if(currentCliente?.direccion) document.getElementById('m-dir').value = currentCliente.direccion;
+    document.getElementById('geo-estado').style.display = 'none';
     renderResumen();
     document.getElementById('modal-datos').classList.add('open');
   }
@@ -917,6 +958,7 @@
 
   // ── CONFIRMAR PEDIDO ───────────────────────────────────────
   async function confirmarPedido(){
+    const dni    = document.getElementById('m-dni').value.trim();
     const nombre = document.getElementById('m-nombre').value.trim();
     const tel    = document.getElementById('m-tel').value.trim();
     const dir    = document.getElementById('m-dir').value.trim();
@@ -991,11 +1033,135 @@
     }
   }
 
+  // ── MODAL — autocompletar por DNI ─────────────────────────
+  async function autocompletarPorDNI(dni){
+    if(!dni || dni.length < 6) return;
+    try{
+      const rows = await sGet('clientes', `dni=eq.${dni}`);
+      if(!rows.length) return;
+      const cli = rows[0];
+      // Si es una clienta distinta a la actual, cargar sus datos
+      if(cli.id !== currentCliente?.id){
+        currentCliente = cli;
+        localStorage.setItem('violeta_cliente_v2', JSON.stringify(cli));
+      }
+      // Autocompletar campos
+      if(cli.nombre && !cli.nombre.startsWith('Cliente '))
+        document.getElementById('m-nombre').value = cli.nombre;
+      if(cli.telefono) document.getElementById('m-tel').value = cli.telefono;
+      if(cli.direccion) document.getElementById('m-dir').value = cli.direccion;
+      toast('✅ Datos cargados automáticamente');
+    }catch(e){}
+  }
+
+  // ── GEOLOCALIZACIÓN ────────────────────────────────────────
+  function obtenerGeolocalizacion(){
+    const estado = document.getElementById('geo-estado');
+    const dirInput = document.getElementById('m-dir');
+    if(!navigator.geolocation){
+      estado.textContent = '⚠️ Tu dispositivo no soporta geolocalización';
+      estado.style.display = 'block';
+      return;
+    }
+    estado.textContent = '📍 Obteniendo ubicación...';
+    estado.style.display = 'block';
+    estado.style.color = '#7c3aed';
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude: lat, longitude: lng, accuracy } = pos.coords;
+        // Usar Nominatim (OpenStreetMap) para reverse geocoding — gratuito, sin API key
+        try{
+          const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`;
+          const res = await fetch(url, { headers: { 'Accept-Language': 'es' } });
+          const data = await res.json();
+          const addr = data.address || {};
+          // Armar dirección legible
+          const partes = [
+            addr.road || addr.pedestrian || addr.path,
+            addr.house_number,
+            addr.suburb || addr.neighbourhood || addr.quarter,
+            addr.city || addr.town || addr.village || addr.municipality,
+          ].filter(Boolean);
+          const dirTexto = partes.join(', ');
+          if(dirTexto){
+            dirInput.value = dirTexto;
+            estado.textContent = `✅ Precisión: ±${Math.round(accuracy)}m`;
+            estado.style.color = '#059669';
+          } else {
+            dirInput.value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+            estado.textContent = `✅ Coordenadas obtenidas (precisión ±${Math.round(accuracy)}m)`;
+            estado.style.color = '#059669';
+          }
+        }catch(e){
+          // Fallback: coordenadas si falla el geocoding
+          dirInput.value = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+          estado.textContent = `✅ Coordenadas (precisión ±${Math.round(accuracy)}m)`;
+          estado.style.color = '#059669';
+        }
+      },
+      (err) => {
+        const msgs = {
+          1: 'Permiso denegado — activá la ubicación en tu celular',
+          2: 'No se pudo obtener la ubicación',
+          3: 'Tiempo agotado — intentá de nuevo'
+        };
+        estado.textContent = '⚠️ ' + (msgs[err.code] || 'Error de geolocalización');
+        estado.style.color = '#ef4444';
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  }
+
+  // ── POST-PEDIDO — opciones ─────────────────────────────────
   function nuevoPedido(){
     carrito = {};
     actualizarUI('_reset');
+    // Precarga el DNI en el modal para el próximo pedido
+    if(currentCliente?.dni) document.getElementById('m-dni').value = currentCliente.dni;
     showScreen('portal');
     renderProductosDePagina(paginaActual || null);
+  }
+
+  async function verMisPedidos(){
+    showScreen('pedidos');
+    const nom = currentCliente?.nombre || currentCliente?.dni || '';
+    document.getElementById('pedidos-cliente-nombre').textContent = nom;
+    const lista = document.getElementById('pedidos-cliente-lista');
+    lista.innerHTML = '<div style="text-align:center;padding:20px;color:#9ca3af;">Cargando...</div>';
+    try{
+      const peds = await sGet('pedidos',
+        `cliente_id=eq.${currentCliente.id}&order=created_at.desc&limit=20`);
+      if(!peds.length){
+        lista.innerHTML = '<div style="text-align:center;padding:30px;color:#9ca3af;">Todavía no tenés pedidos registrados 💜</div>';
+        return;
+      }
+      lista.innerHTML = peds.map(p => {
+        const fecha = new Date(p.created_at).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'});
+        const estadoColor = {pendiente:'#f59e0b',listo:'#7c3aed',entregado:'#059669',cobrado:'#059669',cancelado:'#ef4444'}[p.estado]||'#6b7280';
+        const prods = (p.productos||'').split('\n').filter(Boolean).slice(0,3);
+        return `<div style="background:white;border-radius:14px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="font-size:12px;color:#9ca3af;">${fecha} · Campaña ${p.campana||'—'}</span>
+            <span style="font-size:11px;font-weight:700;color:${estadoColor};background:${estadoColor}18;padding:2px 8px;border-radius:999px;">${(p.estado||'').toUpperCase()}</span>
+          </div>
+          <div style="font-size:13px;color:#374151;line-height:1.6;">
+            ${prods.map(pr=>`• ${pr}`).join('<br>')}
+            ${p.productos.split('\n').length > 3 ? `<br><span style="color:#9ca3af;font-size:11px;">+ ${p.productos.split('\n').length-3} más...</span>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+    }catch(e){
+      lista.innerHTML = '<div style="text-align:center;padding:20px;color:#ef4444;">Error al cargar pedidos</div>';
+    }
+  }
+
+  function cerrarSesion(){
+    currentCliente = null;
+    localStorage.removeItem('violeta_cliente_v2');
+    carrito = {};
+    document.getElementById('dniInput').value = '';
+    showScreen('login');
   }
 
   // ── INIT ───────────────────────────────────────────────────
