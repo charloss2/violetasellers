@@ -869,18 +869,30 @@ function copiarSQL(){navigator.clipboard.writeText(document.getElementById('sqlC
         campana:       p.campana
       }));
       try{
-        // Upsert real: si ya existe (codigo+campana), actualiza todos los campos incluyendo pagina
+        // Upsert: si existe (codigo+campana) actualiza, sino crea
+        // Requiere UNIQUE constraint en (codigo, campana) — ver upsert_constraint_v2.sql
         const res = await fetch(`${SU}/rest/v1/productos`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'apikey': SK,
             'Authorization': 'Bearer ' + SK,
-            'Prefer': 'resolution=merge-duplicates,return=representation'
+            'Prefer': 'resolution=merge-duplicates,return=minimal'
           },
           body: JSON.stringify(batch)
         });
-        if(res.ok) ok += batch.length; else { err += batch.length; console.error(await res.text()); }
+        if(res.ok){
+          ok += batch.length;
+        } else {
+          err += batch.length;
+          const errBody = await res.text();
+          console.error('Error batch:', errBody);
+          // Si el error es por constraint faltante, avisar
+          if(errBody.includes('unique') || errBody.includes('duplicate')){
+            txt.textContent = '⚠️ Falta constraint único — ejecutá upsert_constraint_v2.sql en Supabase';
+            break;
+          }
+        }
       }catch(e){ err += batch.length; console.error(e); }
       const pct = Math.round((i+batchSize)/validos.length*100);
       bar.style.width = Math.min(pct,100)+'%';
