@@ -2,7 +2,8 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <!-- Permitir zoom en el folleto pero controlado -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Violetta — Tu Pedido</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -21,23 +22,18 @@
       --text2:     #6B7280;
       --border:    #E9D5FF;
       --radius:    14px;
-      --shadow:    0 4px 24px rgba(124,58,237,.10);
+      --header-h:  52px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
+    html, body { height: 100%; overflow: hidden; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); }
 
     /* ── PANTALLAS ── */
-    .screen { display: none; }
-    .screen.active { display: flex; flex-direction: column; min-height: 100vh; }
+    .screen { display: none; height: 100%; }
+    .screen.active { display: flex; flex-direction: column; }
 
     /* ── LOGIN ── */
     #scr-login {
-      align-items: center; justify-content: center;
+      align-items: center; justify-content: center; height: 100%;
       background: linear-gradient(145deg, #4C1D95 0%, #7C3AED 50%, #EC4899 100%);
       padding: 24px;
     }
@@ -47,308 +43,205 @@
       text-align: center;
     }
     .login-logo { font-size: 48px; margin-bottom: 8px; }
-    .login-brand {
-      font-family: 'Playfair Display', serif;
-      font-size: 28px; color: var(--violet); margin-bottom: 4px;
-    }
+    .login-brand { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--violet); margin-bottom: 4px; }
     .login-sub { color: var(--text2); font-size: 14px; margin-bottom: 28px; }
     .login-field { margin-bottom: 14px; text-align: left; }
     .login-field label { font-size: 12px; font-weight: 600; color: var(--violet); margin-bottom: 6px; display: block; text-transform: uppercase; letter-spacing: .5px; }
-    .login-field input {
-      width: 100%; padding: 13px 16px; border: 2px solid var(--border);
-      border-radius: 12px; font-size: 15px; font-family: inherit;
-      color: var(--text); transition: border-color .2s;
-    }
+    .login-field input { width: 100%; padding: 13px 16px; border: 2px solid var(--border); border-radius: 12px; font-size: 15px; font-family: inherit; color: var(--text); transition: border-color .2s; }
     .login-field input:focus { outline: none; border-color: var(--violet); }
-    .btn-login {
-      width: 100%; padding: 14px; background: linear-gradient(135deg, var(--violet), var(--pink));
-      color: white; border: none; border-radius: 12px; font-size: 16px;
-      font-weight: 700; font-family: inherit; cursor: pointer; margin-top: 4px;
-      transition: opacity .2s;
-    }
+    .btn-login { width: 100%; padding: 14px; background: linear-gradient(135deg, var(--violet), var(--pink)); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; font-family: inherit; cursor: pointer; margin-top: 4px; }
     .btn-login:active { opacity: .85; }
     .login-err { color: #EF4444; font-size: 13px; margin-top: 10px; display: none; }
 
-    /* ── HEADER ── */
+    /* ── HEADER fijo ── */
     .header {
+      height: var(--header-h); flex-shrink: 0;
       background: white; border-bottom: 1px solid var(--border);
-      padding: 12px 16px; display: flex; align-items: center;
-      justify-content: space-between; position: sticky; top: 0; z-index: 100;
+      padding: 0 16px; display: flex; align-items: center;
+      justify-content: space-between; z-index: 200;
       box-shadow: 0 2px 12px rgba(124,58,237,.08);
     }
-    .header-brand {
-      display: flex; align-items: center; gap: 10px;
-    }
-    .header-logo {
-      font-family: 'Playfair Display', serif;
-      font-size: 18px; color: var(--violet); font-weight: 700;
-    }
-    .header-vend {
-      font-size: 11px; color: var(--text2); margin-top: 1px;
-    }
-    .carrito-btn {
-      position: relative; background: var(--violet); color: white;
-      border: none; border-radius: 12px; padding: 10px 16px;
-      font-size: 13px; font-weight: 700; font-family: inherit;
-      cursor: pointer; display: flex; align-items: center; gap: 6px;
-      transition: background .2s;
-    }
+    .header-brand { display: flex; align-items: center; gap: 10px; }
+    .header-logo { font-family: 'Playfair Display', serif; font-size: 18px; color: var(--violet); font-weight: 700; }
+    .header-vend { font-size: 11px; color: var(--text2); margin-top: 1px; }
+    .carrito-btn { background: var(--violet); color: white; border: none; border-radius: 12px; padding: 9px 14px; font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; display: flex; align-items: center; gap: 6px; }
     .carrito-btn:active { background: var(--violet2); }
-    .carrito-count {
-      background: var(--pink); color: white; border-radius: 999px;
-      font-size: 11px; font-weight: 800; padding: 1px 6px; min-width: 20px;
-      text-align: center;
+    .carrito-count { background: var(--pink); color: white; border-radius: 999px; font-size: 11px; font-weight: 800; padding: 1px 6px; min-width: 20px; text-align: center; }
+
+    /* ── PORTAL: layout dividido ── */
+    #scr-portal { height: 100%; overflow: hidden; }
+    .split-layout {
+      display: flex; flex-direction: column;
+      height: calc(100% - var(--header-h));
+      overflow: hidden;
     }
 
-    /* ── PORTAL (pantalla principal) ── */
-    #scr-portal { background: var(--bg); }
-    .portal-body { flex: 1; display: flex; flex-direction: column; }
-
-    /* ── FOLLETO VIEWER ── */
-    .folleto-wrap {
+    /* ── MITAD SUPERIOR: folleto con zoom ── */
+    .folleto-panel {
+      flex: 0 0 50%;
       background: #1a1a2e;
+      display: flex; flex-direction: column;
+      overflow: hidden;
       position: relative;
-      display: flex; flex-direction: column; align-items: center;
     }
-    .folleto-top-bar {
-      width: 100%; padding: 8px 16px;
+    .folleto-topbar {
+      flex-shrink: 0;
+      padding: 6px 12px;
       display: flex; align-items: center; justify-content: space-between;
     }
-    .folleto-campana {
-      font-size: 11px; color: rgba(255,255,255,.6); font-weight: 600; text-transform: uppercase;
+    .folleto-campana { font-size: 10px; color: rgba(255,255,255,.6); font-weight: 600; text-transform: uppercase; }
+    .folleto-pagina-label { font-size: 11px; color: rgba(255,255,255,.8); font-weight: 700; }
+
+    /* Contenedor del canvas: scrolleable + pinch zoom */
+    .folleto-canvas-scroll {
+      flex: 1;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      cursor: grab;
     }
-    .folleto-pagina-label {
-      font-size: 12px; color: rgba(255,255,255,.8); font-weight: 700;
-    }
-    .folleto-canvas-wrap {
-      position: relative; width: 100%; max-width: 500px;
-      display: flex; align-items: center; justify-content: center;
-    }
+    .folleto-canvas-scroll:active { cursor: grabbing; }
     #folleto-canvas {
-      width: 100%; display: block;
-      box-shadow: 0 8px 32px rgba(0,0,0,.4);
+      display: block;
+      /* width se setea por JS según zoom */
+      touch-action: pan-x pan-y pinch-zoom;
     }
+
     .folleto-loading {
       position: absolute; inset: 0; display: flex; flex-direction: column;
       align-items: center; justify-content: center; color: white; gap: 12px;
-      font-size: 14px; background: rgba(26,26,46,.8);
+      font-size: 14px; background: rgba(26,26,46,.9); z-index: 10;
     }
-    .spinner {
-      width: 36px; height: 36px; border: 3px solid rgba(255,255,255,.2);
-      border-top-color: var(--pink); border-radius: 50%;
-      animation: spin .8s linear infinite;
-    }
+    .spinner { width: 32px; height: 32px; border: 3px solid rgba(255,255,255,.2); border-top-color: var(--pink); border-radius: 50%; animation: spin .8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Flechas nav */
+    /* Barra de navegación páginas */
     .folleto-nav {
-      width: 100%; max-width: 500px;
+      flex-shrink: 0;
       display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 16px; gap: 8px;
+      padding: 6px 12px; gap: 8px; background: rgba(0,0,0,.3);
     }
     .nav-arrow {
-      background: rgba(255,255,255,.12); color: white; border: 1px solid rgba(255,255,255,.2);
-      border-radius: 10px; padding: 10px 20px; font-size: 18px;
-      cursor: pointer; font-family: inherit; font-weight: 700;
-      transition: background .2s; flex-shrink: 0;
+      background: rgba(255,255,255,.15); color: white; border: 1px solid rgba(255,255,255,.2);
+      border-radius: 8px; padding: 7px 16px; font-size: 16px;
+      cursor: pointer; font-family: inherit; font-weight: 700; flex-shrink: 0;
     }
-    .nav-arrow:disabled { opacity: .3; cursor: default; }
-    .nav-arrow:not(:disabled):active { background: rgba(255,255,255,.25); }
-    .folleto-dots {
-      display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; flex: 1;
+    .nav-arrow:disabled { opacity: .25; cursor: default; }
+    .nav-arrow:not(:disabled):active { background: rgba(255,255,255,.3); }
+
+    /* Zoom controls */
+    .zoom-controls {
+      display: flex; align-items: center; gap: 6px;
     }
-    .folleto-dot {
-      width: 7px; height: 7px; border-radius: 50%;
-      background: rgba(255,255,255,.3); cursor: pointer; transition: all .2s;
+    .zoom-btn {
+      background: rgba(255,255,255,.15); color: white; border: 1px solid rgba(255,255,255,.2);
+      border-radius: 8px; width: 30px; height: 30px; font-size: 18px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-family: inherit; flex-shrink: 0;
     }
+    .zoom-btn:active { background: rgba(255,255,255,.3); }
+    .zoom-label { font-size: 11px; color: rgba(255,255,255,.7); min-width: 36px; text-align: center; }
+
+    .folleto-dots { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; flex: 1; overflow: hidden; }
+    .folleto-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.3); cursor: pointer; transition: all .2s; flex-shrink: 0; }
     .folleto-dot.active { background: var(--pink); transform: scale(1.4); }
 
     /* Sin PDF */
-    .folleto-sinpdf {
-      padding: 32px 20px; text-align: center; color: rgba(255,255,255,.7);
-    }
-    .folleto-sinpdf p { font-size: 14px; margin-top: 8px; }
+    .folleto-sinpdf { padding: 20px; text-align: center; color: rgba(255,255,255,.7); font-size: 13px; }
 
-    /* ── PRODUCTOS DE LA PÁGINA ── */
-    .productos-section {
-      flex: 1; padding: 0 0 100px;
+    /* ── MITAD INFERIOR: productos scrolleables ── */
+    .productos-panel {
+      flex: 0 0 50%;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      background: var(--bg);
     }
     .productos-header {
-      padding: 14px 16px 10px;
+      flex-shrink: 0;
+      padding: 10px 14px;
       display: flex; align-items: center; justify-content: space-between;
       border-bottom: 1px solid var(--border); background: white;
-      position: sticky; top: 57px; z-index: 50;
     }
-    .productos-titulo {
-      font-size: 13px; font-weight: 700; color: var(--text2);
-      text-transform: uppercase; letter-spacing: .5px;
+    .productos-titulo { font-size: 12px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; }
+    .productos-count-label { font-size: 12px; color: var(--violet); font-weight: 600; }
+
+    /* Lista scrolleable */
+    .productos-lista {
+      flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      padding: 8px 10px 80px;
+      display: flex; flex-direction: column; gap: 7px;
     }
-    .productos-count-label {
-      font-size: 12px; color: var(--violet); font-weight: 600;
-    }
-    .productos-lista { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
-    .prod-card {
-      background: white; border-radius: var(--radius);
-      border: 2px solid var(--border);
-      padding: 12px 14px;
-      display: flex; align-items: center; gap: 12px;
-      transition: border-color .2s, box-shadow .2s;
-    }
-    .prod-card.en-carrito {
-      border-color: var(--green); background: var(--green-lt);
-    }
+
+    /* Cards de producto */
+    .prod-card { background: white; border-radius: 12px; border: 2px solid var(--border); padding: 10px 12px; display: flex; align-items: center; gap: 10px; transition: border-color .2s; }
+    .prod-card.en-carrito { border-color: var(--green); background: var(--green-lt); }
     .prod-info { flex: 1; min-width: 0; }
-    .prod-codigo {
-      font-size: 10px; font-weight: 700; color: var(--violet);
-      background: #EDE9FE; border-radius: 6px; padding: 2px 6px;
-      display: inline-block; margin-bottom: 4px;
-    }
-    .prod-nombre {
-      font-size: 13px; font-weight: 600; color: var(--text);
-      line-height: 1.3; margin-bottom: 4px;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .prod-precio {
-      font-size: 14px; font-weight: 700; color: var(--violet);
-    }
-    .prod-precio-tach {
-      font-size: 11px; color: var(--text2); text-decoration: line-through; margin-left: 4px;
-    }
-    .prod-promo-tag {
-      font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 999px;
-      margin-left: 4px;
-    }
-    .prod-controles {
-      display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0;
-    }
-    .qty-wrap {
-      display: flex; align-items: center; gap: 6px;
-    }
-    .qty-btn {
-      width: 30px; height: 30px; border-radius: 8px; border: none;
-      font-size: 18px; font-weight: 700; cursor: pointer; font-family: inherit;
-      display: flex; align-items: center; justify-content: center;
-      transition: all .15s;
-    }
+    .prod-codigo { font-size: 10px; font-weight: 700; color: var(--violet); background: #EDE9FE; border-radius: 6px; padding: 1px 5px; display: inline-block; margin-bottom: 3px; }
+    .prod-nombre { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.3; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .prod-precio { font-size: 13px; font-weight: 700; color: var(--violet); }
+    .prod-precio-tach { font-size: 10px; color: var(--text2); text-decoration: line-through; margin-left: 3px; }
+    .prod-promo-tag { font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 999px; margin-left: 3px; }
+    .prod-controles { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
+    .qty-wrap { display: flex; align-items: center; gap: 5px; }
+    .qty-btn { width: 28px; height: 28px; border-radius: 7px; border: none; font-size: 18px; font-weight: 700; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; transition: all .15s; }
     .qty-btn.menos { background: #FEE2E2; color: #DC2626; }
     .qty-btn.mas   { background: #EDE9FE; color: var(--violet); }
     .qty-btn.mas.agregar { background: var(--violet); color: white; font-size: 20px; }
-    .qty-btn:active { transform: scale(.92); }
-    .qty-num {
-      font-size: 15px; font-weight: 800; color: var(--text);
-      min-width: 22px; text-align: center;
-    }
-    .btn-borrar {
-      background: none; border: none; color: #9CA3AF; cursor: pointer;
-      font-size: 14px; padding: 2px 4px; transition: color .2s;
-    }
-    .btn-borrar:hover { color: #EF4444; }
-    .en-carrito-badge {
-      font-size: 10px; font-weight: 700; color: var(--green);
-      display: flex; align-items: center; gap: 3px;
-    }
-
-    /* Sin productos */
-    .sin-productos {
-      text-align: center; padding: 40px 20px; color: var(--text2);
-    }
-    .sin-productos-emoji { font-size: 40px; margin-bottom: 12px; }
-    .sin-productos p { font-size: 14px; line-height: 1.6; }
+    .qty-btn:active { transform: scale(.9); }
+    .qty-num { font-size: 14px; font-weight: 800; color: var(--text); min-width: 20px; text-align: center; }
+    .btn-borrar { background: none; border: none; color: #9CA3AF; cursor: pointer; font-size: 13px; padding: 2px; }
+    .en-carrito-badge { font-size: 9px; font-weight: 700; color: var(--green); }
+    .sin-productos { text-align: center; padding: 24px 16px; color: var(--text2); }
+    .sin-productos-emoji { font-size: 32px; margin-bottom: 8px; }
+    .sin-productos p { font-size: 13px; line-height: 1.6; }
 
     /* ── BARRA FINALIZAR ── */
     .finalizar-bar {
       position: fixed; bottom: 0; left: 0; right: 0;
       background: white; border-top: 1px solid var(--border);
-      padding: 12px 16px; z-index: 200;
+      padding: 10px 14px; z-index: 300;
       box-shadow: 0 -4px 20px rgba(124,58,237,.10);
     }
     .btn-finalizar {
-      width: 100%; padding: 16px; border: none; border-radius: 14px;
+      width: 100%; padding: 14px; border: none; border-radius: 12px;
       background: linear-gradient(135deg, var(--violet), var(--pink));
-      color: white; font-size: 16px; font-weight: 700; font-family: inherit;
-      cursor: pointer; transition: opacity .2s;
-      display: flex; align-items: center; justify-content: center; gap: 10px;
+      color: white; font-size: 15px; font-weight: 700; font-family: inherit;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
     }
     .btn-finalizar:disabled { opacity: .4; cursor: default; }
-    .btn-finalizar:not(:disabled):active { opacity: .85; }
-    .btn-finalizar-items {
-      background: rgba(255,255,255,.25); border-radius: 999px;
-      padding: 2px 10px; font-size: 13px;
-    }
+    .btn-finalizar-items { background: rgba(255,255,255,.25); border-radius: 999px; padding: 2px 10px; font-size: 12px; }
 
-    /* ── MODAL DATOS ── */
-    .modal-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,.5); z-index: 500;
-      align-items: flex-end; justify-content: center;
-    }
+    /* ── MODAL ── */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 500; align-items: flex-end; justify-content: center; }
     .modal-overlay.open { display: flex; }
-    .modal-box {
-      background: white; border-radius: 24px 24px 0 0;
-      padding: 24px 20px 32px; width: 100%; max-width: 520px;
-      max-height: 92vh; overflow-y: auto;
-      animation: slideUp .3s ease;
-    }
+    .modal-box { background: white; border-radius: 24px 24px 0 0; padding: 20px 18px 28px; width: 100%; max-width: 520px; max-height: 92vh; overflow-y: auto; animation: slideUp .3s ease; }
     @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-    .modal-handle {
-      width: 40px; height: 4px; background: #E5E7EB;
-      border-radius: 999px; margin: 0 auto 20px;
-    }
-    .modal-titulo {
-      font-family: 'Playfair Display', serif;
-      font-size: 22px; color: var(--violet); margin-bottom: 4px;
-    }
-    .modal-sub { font-size: 14px; color: var(--text2); margin-bottom: 20px; }
-    .campo { margin-bottom: 14px; }
-    .campo label { font-size: 12px; font-weight: 700; color: var(--violet); text-transform: uppercase; letter-spacing: .5px; display: block; margin-bottom: 6px; }
-    .campo input, .campo select, .campo textarea {
-      width: 100%; padding: 13px 15px; border: 2px solid var(--border);
-      border-radius: 12px; font-size: 15px; font-family: inherit;
-      color: var(--text); transition: border-color .2s; background: white;
-    }
+    .modal-handle { width: 40px; height: 4px; background: #E5E7EB; border-radius: 999px; margin: 0 auto 16px; }
+    .modal-titulo { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--violet); margin-bottom: 4px; }
+    .modal-sub { font-size: 13px; color: var(--text2); margin-bottom: 16px; }
+    .campo { margin-bottom: 12px; }
+    .campo label { font-size: 11px; font-weight: 700; color: var(--violet); text-transform: uppercase; letter-spacing: .5px; display: block; margin-bottom: 5px; }
+    .campo input, .campo select, .campo textarea { width: 100%; padding: 12px 14px; border: 2px solid var(--border); border-radius: 10px; font-size: 14px; font-family: inherit; color: var(--text); background: white; }
     .campo input:focus, .campo select:focus, .campo textarea:focus { outline: none; border-color: var(--violet); }
-    .resumen-pedido {
-      background: var(--pink-lt); border: 1px solid #FBCFE8;
-      border-radius: 12px; padding: 14px; margin-bottom: 16px;
-      font-size: 13px; max-height: 160px; overflow-y: auto;
-    }
-    .resumen-item { display: flex; justify-content: space-between; padding: 3px 0; }
-    .resumen-total {
-      border-top: 1px solid #FBCFE8; margin-top: 8px; padding-top: 8px;
-      font-weight: 700; font-size: 15px; color: var(--violet);
-    }
-    .btn-confirmar {
-      width: 100%; padding: 16px; border: none; border-radius: 14px;
-      background: linear-gradient(135deg, var(--violet), var(--pink));
-      color: white; font-size: 16px; font-weight: 700; font-family: inherit;
-      cursor: pointer; margin-top: 8px;
-    }
+    .resumen-pedido { background: var(--pink-lt); border: 1px solid #FBCFE8; border-radius: 10px; padding: 12px; margin-bottom: 14px; font-size: 12px; max-height: 140px; overflow-y: auto; }
+    .resumen-item { display: flex; justify-content: space-between; padding: 2px 0; }
+    .resumen-total { border-top: 1px solid #FBCFE8; margin-top: 6px; padding-top: 6px; font-weight: 700; font-size: 14px; color: var(--violet); }
+    .btn-confirmar { width: 100%; padding: 14px; border: none; border-radius: 12px; background: linear-gradient(135deg, var(--violet), var(--pink)); color: white; font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer; margin-top: 6px; }
     .btn-confirmar:disabled { opacity: .5; }
 
     /* ── PANTALLA OK ── */
-    #scr-ok {
-      align-items: center; justify-content: center; text-align: center;
-      background: linear-gradient(145deg, #4C1D95 0%, #7C3AED 50%, #EC4899 100%);
-      padding: 32px;
-    }
-    .ok-box {
-      background: white; border-radius: 24px; padding: 40px 28px;
-      max-width: 360px; width: 100%;
-    }
-    .ok-emoji { font-size: 60px; margin-bottom: 12px; }
-    .ok-titulo { font-family: 'Playfair Display', serif; font-size: 24px; color: var(--violet); margin-bottom: 8px; }
-    .ok-sub { color: var(--text2); font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
-    .btn-nuevo { width: 100%; padding: 14px; border: 2px solid var(--border); border-radius: 12px; background: white; color: var(--violet); font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer; }
+    #scr-ok { align-items: center; justify-content: center; text-align: center; background: linear-gradient(145deg, #4C1D95 0%, #7C3AED 50%, #EC4899 100%); padding: 32px; }
+    .ok-box { background: white; border-radius: 24px; padding: 36px 24px; max-width: 360px; width: 100%; }
+    .ok-emoji { font-size: 56px; margin-bottom: 10px; }
+    .ok-titulo { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--violet); margin-bottom: 6px; }
+    .ok-sub { color: var(--text2); font-size: 13px; line-height: 1.6; margin-bottom: 18px; }
+    .btn-nuevo { width: 100%; padding: 13px; border: 2px solid var(--border); border-radius: 10px; background: white; color: var(--violet); font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; }
 
-    .toast {
-      position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
-      background: var(--text); color: white; padding: 10px 20px;
-      border-radius: 999px; font-size: 14px; font-weight: 500;
-      opacity: 0; transition: opacity .3s; z-index: 999; white-space: nowrap;
-      pointer-events: none;
-    }
+    .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--text); color: white; padding: 9px 18px; border-radius: 999px; font-size: 13px; font-weight: 500; opacity: 0; transition: opacity .3s; z-index: 999; white-space: nowrap; pointer-events: none; }
     .toast.show { opacity: 1; }
-  </style>
+
 </head>
 <body>
 
@@ -385,35 +278,43 @@
     </button>
   </div>
 
-  <div class="portal-body">
+  <div class="split-layout">
 
-    <!-- Folleto viewer -->
-    <div class="folleto-wrap" id="folleto-wrap">
-      <div class="folleto-top-bar">
+    <!-- ── MITAD SUPERIOR: folleto ── -->
+    <div class="folleto-panel">
+      <div class="folleto-topbar">
         <span class="folleto-campana" id="camp-label">Campaña —</span>
-        <span class="folleto-pagina-label" id="pag-label">Página — / —</span>
+        <span class="folleto-pagina-label" id="pag-label">— / —</span>
       </div>
-      <div class="folleto-canvas-wrap">
+
+      <!-- Canvas scrolleable con pinch zoom nativo -->
+      <div class="folleto-canvas-scroll" id="folleto-scroll">
         <canvas id="folleto-canvas"></canvas>
         <div class="folleto-loading" id="folleto-loading">
           <div class="spinner"></div>
           <span>Cargando folleto...</span>
         </div>
+        <div class="folleto-sinpdf" id="folleto-sinpdf" style="display:none">
+          <div style="font-size:32px">📖</div>
+          <p>Folleto no disponible.<br>Buscá tus productos abajo.</p>
+        </div>
       </div>
+
+      <!-- Barra: flechas + zoom -->
       <div class="folleto-nav">
         <button class="nav-arrow" id="btn-prev" onclick="cambiarPagina(-1)" disabled>←</button>
+        <div class="zoom-controls">
+          <button class="zoom-btn" onclick="ajustarZoom(-0.25)">−</button>
+          <span class="zoom-label" id="zoom-label">100%</span>
+          <button class="zoom-btn" onclick="ajustarZoom(0.25)">+</button>
+        </div>
         <div class="folleto-dots" id="folleto-dots"></div>
         <button class="nav-arrow" id="btn-next" onclick="cambiarPagina(1)">→</button>
       </div>
-      <!-- Fallback sin PDF -->
-      <div class="folleto-sinpdf" id="folleto-sinpdf" style="display:none">
-        <div style="font-size:40px">📖</div>
-        <p>El folleto no está disponible por el momento.<br>Igual podés buscar tus productos abajo.</p>
-      </div>
     </div>
 
-    <!-- Productos de la página -->
-    <div class="productos-section">
+    <!-- ── MITAD INFERIOR: productos scrolleables ── -->
+    <div class="productos-panel">
       <div class="productos-header">
         <span class="productos-titulo" id="prods-titulo">Productos</span>
         <span class="productos-count-label" id="prods-count"></span>
@@ -421,12 +322,12 @@
       <div class="productos-lista" id="productos-lista">
         <div class="sin-productos">
           <div class="sin-productos-emoji">📖</div>
-          <p>Navegá el folleto para ver<br>los productos disponibles</p>
+          <p>Cargando productos...</p>
         </div>
       </div>
     </div>
 
-  </div><!-- portal-body -->
+  </div><!-- split-layout -->
 
   <!-- Barra finalizar -->
   <div class="finalizar-bar">
@@ -444,44 +345,19 @@
     <div class="modal-handle"></div>
     <div class="modal-titulo">Confirmá tu pedido 💜</div>
     <div class="modal-sub">Revisá los productos y completá tus datos</div>
-
-    <!-- Resumen -->
     <div class="resumen-pedido" id="modal-resumen"></div>
-
-    <!-- Datos -->
-    <div class="campo">
-      <label>Tu nombre</label>
-      <input type="text" id="m-nombre" placeholder="Nombre y apellido">
-    </div>
-    <div class="campo">
-      <label>Teléfono</label>
-      <input type="tel" id="m-tel" placeholder="11 1234-5678" inputmode="numeric">
-    </div>
-    <div class="campo">
-      <label>Dirección de entrega</label>
-      <input type="text" id="m-dir" placeholder="Calle, número, piso...">
-    </div>
-    <div class="campo">
-      <label>Forma de pago</label>
+    <div class="campo"><label>Tu nombre</label><input type="text" id="m-nombre" placeholder="Nombre y apellido"></div>
+    <div class="campo"><label>Teléfono</label><input type="tel" id="m-tel" placeholder="11 1234-5678" inputmode="numeric"></div>
+    <div class="campo"><label>Dirección de entrega</label><input type="text" id="m-dir" placeholder="Calle, número, piso..."></div>
+    <div class="campo"><label>Forma de pago</label>
       <select id="m-pago">
         <option value="">— Elegí una opción —</option>
-        <option>Efectivo</option>
-        <option>Transferencia</option>
-        <option>Débito</option>
-        <option>Crédito</option>
+        <option>Efectivo</option><option>Transferencia</option><option>Débito</option><option>Crédito</option>
       </select>
     </div>
-    <div class="campo">
-      <label>Notas (opcional)</label>
-      <textarea id="m-notas" rows="2" placeholder="Horarios, referencias, etc."></textarea>
-    </div>
-
-    <button class="btn-confirmar" id="btn-confirmar" onclick="confirmarPedido()">
-      💜 Confirmar y enviar
-    </button>
-    <button onclick="cerrarModal()" style="width:100%;padding:12px;border:none;background:none;color:var(--text2);font-size:14px;cursor:pointer;margin-top:6px;font-family:inherit;">
-      Seguir agregando productos
-    </button>
+    <div class="campo"><label>Notas (opcional)</label><textarea id="m-notas" rows="2" placeholder="Horarios, referencias, etc."></textarea></div>
+    <button class="btn-confirmar" id="btn-confirmar" onclick="confirmarPedido()">💜 Confirmar y enviar</button>
+    <button onclick="cerrarModal()" style="width:100%;padding:12px;border:none;background:none;color:var(--text2);font-size:14px;cursor:pointer;margin-top:6px;font-family:inherit;">Seguir agregando productos</button>
   </div>
 </div>
 
@@ -515,6 +391,7 @@
   let pdfDoc              = null;
   let paginaActual        = 1;
   let totalPaginas        = 0;
+  let zoomLevel           = 1.0;  // zoom del folleto (independiente del resto)
 
   // ── SUPABASE HELPERS ───────────────────────────────────────
   function H(){ return {'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}; }
@@ -640,36 +517,42 @@
 
   async function renderPagina(num){
     paginaActual = num;
-    document.getElementById('pag-label').textContent = `Página ${num} / ${totalPaginas}`;
+    document.getElementById('pag-label').textContent = `${num} / ${totalPaginas}`;
     document.getElementById('btn-prev').disabled = num <= 1;
     document.getElementById('btn-next').disabled = num >= totalPaginas;
-    // Dots
     document.querySelectorAll('.folleto-dot').forEach((d,i) => d.classList.toggle('active', i+1===num));
 
     const page    = await pdfDoc.getPage(num);
     const canvas  = document.getElementById('folleto-canvas');
     const ctx     = canvas.getContext('2d', {willReadFrequently: false});
-    const wrap    = document.querySelector('.folleto-canvas-wrap');
+    const scroll  = document.getElementById('folleto-scroll');
 
-    // Usar devicePixelRatio para pantallas retina/alta densidad (móviles)
-    const dpr     = window.devicePixelRatio || 1;
-    const fitScale = wrap.offsetWidth / page.getViewport({scale:1}).width;
-    // Renderizar a mayor resolución según la densidad del display
-    const scale   = fitScale * dpr;
+    // Ancho base = ancho del contenedor
+    const baseWidth = scroll.offsetWidth;
+    const dpr       = window.devicePixelRatio || 1;
 
-    const viewport = page.getViewport({scale});
+    // Scale = ajuste al ancho × zoom del usuario × dpr (para calidad)
+    const fitScale  = baseWidth / page.getViewport({scale:1}).width;
+    const scale     = fitScale * zoomLevel * dpr;
 
-    // Canvas interno a resolución completa
+    const viewport  = page.getViewport({scale});
+
+    // Canvas a resolución real (alta densidad)
     canvas.width  = viewport.width;
     canvas.height = viewport.height;
 
-    // CSS: mostrar al tamaño del contenedor (escala visual)
+    // CSS: tamaño visual = resolución / dpr (se ve nítido en retina)
     canvas.style.width  = (viewport.width  / dpr) + 'px';
     canvas.style.height = (viewport.height / dpr) + 'px';
 
     await page.render({canvasContext: ctx, viewport}).promise;
-
     renderProductosDePagina(num);
+  }
+
+  function ajustarZoom(delta){
+    zoomLevel = Math.max(0.5, Math.min(3, zoomLevel + delta));
+    document.getElementById('zoom-label').textContent = Math.round(zoomLevel * 100) + '%';
+    if(paginaActual) renderPagina(paginaActual);
   }
 
   function cambiarPagina(dir){
