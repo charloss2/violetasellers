@@ -648,12 +648,25 @@
 
     const page    = await pdfDoc.getPage(num);
     const canvas  = document.getElementById('folleto-canvas');
-    const ctx     = canvas.getContext('2d');
+    const ctx     = canvas.getContext('2d', {willReadFrequently: false});
     const wrap    = document.querySelector('.folleto-canvas-wrap');
-    const scale   = Math.min(wrap.offsetWidth / page.getViewport({scale:1}).width, 2);
+
+    // Usar devicePixelRatio para pantallas retina/alta densidad (móviles)
+    const dpr     = window.devicePixelRatio || 1;
+    const fitScale = wrap.offsetWidth / page.getViewport({scale:1}).width;
+    // Renderizar a mayor resolución según la densidad del display
+    const scale   = fitScale * dpr;
+
     const viewport = page.getViewport({scale});
+
+    // Canvas interno a resolución completa
     canvas.width  = viewport.width;
     canvas.height = viewport.height;
+
+    // CSS: mostrar al tamaño del contenedor (escala visual)
+    canvas.style.width  = (viewport.width  / dpr) + 'px';
+    canvas.style.height = (viewport.height / dpr) + 'px';
+
     await page.render({canvasContext: ctx, viewport}).promise;
 
     renderProductosDePagina(num);
