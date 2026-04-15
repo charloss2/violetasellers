@@ -557,8 +557,9 @@
     // Cargar vendedora
     await cargarVendedora();
 
-    // Cargar catálogo PRIMERO, esperar que termine
-    if(campanaParam) await cargarCatalogo(campanaParam);
+    // Cargar catálogo — usar parámetro URL o campaña 6 por defecto
+    const campNum = campanaParam || '6';
+    await cargarCatalogo(campNum);
 
     // Cargar folleto PDF DESPUÉS (para que el catálogo ya esté disponible cuando renderice)
     await cargarFolleto();
