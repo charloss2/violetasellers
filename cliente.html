@@ -71,12 +71,20 @@
     /* ── PORTAL: layout dividido ── */
     #scr-portal { height: 100%; overflow: hidden; }
     .split-layout {
-      display: flex; flex-direction: column;
+      display: flex;
+      flex-direction: column;      /* móvil: arriba/abajo */
       height: calc(100% - var(--header-h));
       overflow: hidden;
     }
 
-    /* ── MITAD SUPERIOR: folleto con zoom ── */
+    /* ── PC: layout horizontal ── */
+    @media (min-width: 768px) {
+      .split-layout { flex-direction: row; }
+      .folleto-panel { flex: 0 0 50%; height: 100%; }
+      .productos-panel { flex: 1; height: 100%; border-left: 1px solid var(--border); }
+    }
+
+    /* ── MITAD SUPERIOR/IZQUIERDA: folleto con zoom ── */
     .folleto-panel {
       flex: 0 0 50%;
       background: #1a1a2e;
@@ -105,8 +113,8 @@
     .folleto-canvas-scroll:active { cursor: grabbing; }
     #folleto-canvas {
       display: block;
-      /* width se setea por JS según zoom */
-      touch-action: pan-x pan-y pinch-zoom;
+      /* touch-action: pan permite scroll con un dedo; el pinch lo manejamos nosotros */
+      touch-action: pan-x pan-y;
     }
 
     .folleto-loading {
@@ -167,6 +175,50 @@
     .productos-titulo { font-size: 12px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; }
     .productos-count-label { font-size: 12px; color: var(--violet); font-weight: 600; }
 
+    /* ── Buscador ── */
+    .buscar-wrap {
+      flex-shrink: 0;
+      padding: 8px 10px;
+      background: white;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+    .buscar-input {
+      width: 100%; padding: 8px 36px 8px 12px;
+      border: 2px solid var(--border); border-radius: 10px;
+      font-size: 13px; font-family: inherit; color: var(--text);
+      background: #faf5ff;
+    }
+    .buscar-input:focus { outline: none; border-color: var(--violet); }
+    .buscar-clear {
+      position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--text2); font-size: 16px;
+      cursor: pointer; display: none; line-height: 1;
+    }
+    .buscar-resultados {
+      position: absolute; left: 10px; right: 10px; top: calc(100% - 4px);
+      background: white; border: 2px solid var(--border); border-top: none;
+      border-radius: 0 0 12px 12px; z-index: 100;
+      max-height: 260px; overflow-y: auto;
+      box-shadow: 0 8px 24px rgba(124,58,237,.12);
+      display: none;
+    }
+    .buscar-resultados.open { display: block; }
+    .buscar-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-bottom: 1px solid #f3f0ff;
+      cursor: pointer; transition: background .15s;
+    }
+    .buscar-item:last-child { border-bottom: none; }
+    .buscar-item:hover { background: #faf5ff; }
+    .buscar-item.en-carrito { background: var(--green-lt); }
+    .buscar-item-info { flex: 1; min-width: 0; }
+    .buscar-item-cod { font-size: 10px; font-weight: 700; color: var(--violet); background: #ede9fe; border-radius: 4px; padding: 1px 5px; margin-right: 4px; }
+    .buscar-item-nom { font-size: 12px; color: var(--text); line-height: 1.3; }
+    .buscar-item-precio { font-size: 12px; font-weight: 700; color: var(--violet); flex-shrink: 0; }
+    .buscar-item-badge { font-size: 10px; color: var(--green); font-weight: 700; flex-shrink: 0; }
+    .buscar-noresult { padding: 14px 12px; font-size: 13px; color: var(--text2); text-align: center; }
+
     /* Lista scrolleable */
     .productos-lista {
       flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
@@ -179,7 +231,7 @@
     .prod-card.en-carrito { border-color: var(--green); background: var(--green-lt); }
     .prod-info { flex: 1; min-width: 0; }
     .prod-codigo { font-size: 10px; font-weight: 700; color: var(--violet); background: #EDE9FE; border-radius: 6px; padding: 1px 5px; display: inline-block; margin-bottom: 3px; }
-    .prod-nombre { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.3; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .prod-nombre { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.3; margin-bottom: 3px; white-space: normal; word-break: break-word; }
     .prod-precio { font-size: 13px; font-weight: 700; color: var(--violet); }
     .prod-precio-tach { font-size: 10px; color: var(--text2); text-decoration: line-through; margin-left: 3px; }
     .prod-promo-tag { font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 999px; margin-left: 3px; }
@@ -313,11 +365,20 @@
       </div>
     </div>
 
-    <!-- ── MITAD INFERIOR: productos scrolleables ── -->
+    <!-- ── MITAD INFERIOR/DERECHA: productos scrolleables ── -->
     <div class="productos-panel">
       <div class="productos-header">
         <span class="productos-titulo" id="prods-titulo">Productos</span>
         <span class="productos-count-label" id="prods-count"></span>
+      </div>
+      <!-- Buscador -->
+      <div class="buscar-wrap">
+        <input type="text" class="buscar-input" id="buscar-input"
+          placeholder="🔍 Buscar por código o nombre..."
+          oninput="onBuscarInput(this.value)"
+          onblur="setTimeout(()=>cerrarBuscar(),200)">
+        <button class="buscar-clear" id="buscar-clear" onclick="limpiarBuscar()">✕</button>
+        <div class="buscar-resultados" id="buscar-resultados"></div>
       </div>
       <div class="productos-lista" id="productos-lista">
         <div class="sin-productos">
@@ -440,6 +501,9 @@
 
     // Cargar folleto PDF DESPUÉS (para que el catálogo ya esté disponible cuando renderice)
     await cargarFolleto();
+
+    // Activar pinch zoom en móvil
+    initPinchZoom();
   }
 
   async function cargarVendedora(){
@@ -553,6 +617,107 @@
     zoomLevel = Math.max(0.5, Math.min(3, zoomLevel + delta));
     document.getElementById('zoom-label').textContent = Math.round(zoomLevel * 100) + '%';
     if(paginaActual) renderPagina(paginaActual);
+  }
+
+  // ── BUSCADOR ───────────────────────────────────────────────
+  function onBuscarInput(q){
+    const clear = document.getElementById('buscar-clear');
+    const res   = document.getElementById('buscar-resultados');
+    clear.style.display = q ? 'block' : 'none';
+    if(!q.trim()){ res.classList.remove('open'); return; }
+
+    const qLow = q.toLowerCase().trim();
+    const hits = allProductosCli.filter(p =>
+      String(p.codigo).includes(qLow) ||
+      (p.nombre||'').toLowerCase().includes(qLow)
+    ).slice(0, 20);
+
+    if(!hits.length){
+      res.innerHTML = `<div class="buscar-noresult">Sin resultados para "${q}"</div>`;
+      res.classList.add('open');
+      return;
+    }
+
+    res.innerHTML = hits.map(p => {
+      const enC = !!carrito[p.codigo];
+      const precio = p.precio ? '$' + Number(p.precio).toLocaleString('es-AR') : '';
+      return `<div class="buscar-item ${enC?'en-carrito':''}" onclick="seleccionarDeBusqueda('${p.codigo}')">
+        <div class="buscar-item-info">
+          <span class="buscar-item-cod">${p.codigo}</span>
+          <span class="buscar-item-nom">${p.nombre}</span>
+        </div>
+        <span class="buscar-item-precio">${precio}</span>
+        ${enC ? '<span class="buscar-item-badge">✅</span>' : ''}
+      </div>`;
+    }).join('');
+    res.classList.add('open');
+  }
+
+  function seleccionarDeBusqueda(codigo){
+    // Agregar al carrito
+    agregarAlCarrito(codigo);
+
+    // Cerrar buscador
+    limpiarBuscar();
+
+    // Marcar en la lista del folleto si el producto está en la página actual
+    // (si no está en la página, actualizar igual el carrito global)
+    actualizarUI(codigo);
+
+    // Si el producto no está en la página actual, mostrar toast indicando en qué página está
+    const prod = allProductosCli.find(p => p.codigo === codigo);
+    if(prod && prod.pagina){
+      const pagProd = String(prod.pagina);
+      const enPaginaActual = productosDeEstaPagina(paginaActual).some(p => p.codigo === codigo);
+      if(!enPaginaActual){
+        toast(`✅ Agregado — está en página ${pagProd} del folleto`);
+      }
+    }
+  }
+
+  function limpiarBuscar(){
+    document.getElementById('buscar-input').value = '';
+    document.getElementById('buscar-clear').style.display = 'none';
+    cerrarBuscar();
+  }
+
+  function cerrarBuscar(){
+    document.getElementById('buscar-resultados').classList.remove('open');
+  }
+  // Detecta dos dedos en el folleto y ajusta el zoom sin afectar el resto
+  function initPinchZoom(){
+    const scroll = document.getElementById('folleto-scroll');
+    if(!scroll) return;
+
+    let lastDist = null;
+
+    scroll.addEventListener('touchstart', e => {
+      if(e.touches.length === 2) {
+        e.preventDefault();
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        lastDist = Math.hypot(dx, dy);
+      }
+    }, {passive: false});
+
+    scroll.addEventListener('touchmove', e => {
+      if(e.touches.length === 2 && lastDist !== null) {
+        e.preventDefault();
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.hypot(dx, dy);
+        const ratio = dist / lastDist;
+        lastDist = dist;
+
+        zoomLevel = Math.max(0.5, Math.min(3, zoomLevel * ratio));
+        document.getElementById('zoom-label').textContent = Math.round(zoomLevel * 100) + '%';
+        if(paginaActual) renderPagina(paginaActual);
+      }
+    }, {passive: false});
+
+    scroll.addEventListener('touchend', e => {
+      if(e.touches.length < 2) lastDist = null;
+    });
   }
 
   function cambiarPagina(dir){
