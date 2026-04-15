@@ -265,6 +265,19 @@
     .btn-finalizar:disabled { opacity: .4; cursor: default; }
     .btn-finalizar-items { background: rgba(255,255,255,.25); border-radius: 999px; padding: 2px 10px; font-size: 12px; }
 
+    /* En PC: el botón deja de ser fixed y vive dentro del panel de productos */
+    @media (min-width: 768px) {
+      .finalizar-bar {
+        position: relative; bottom: auto; left: auto; right: auto;
+        box-shadow: none; border-top: 1px solid var(--border);
+        padding: 8px 12px; flex-shrink: 0;
+      }
+      /* El panel de productos necesita incluir el botón sin scroll externo */
+      .productos-panel { padding-bottom: 0; }
+      /* Menos padding inferior en la lista ya que el botón no es fixed */
+      .productos-lista { padding-bottom: 12px; }
+    }
+
     /* ── MODAL ── */
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 500; align-items: flex-end; justify-content: center; }
     .modal-overlay.open { display: flex; }
@@ -386,17 +399,16 @@
           <p>Cargando productos...</p>
         </div>
       </div>
+      <!-- Botón finalizar — fixed en móvil, estático al pie en PC -->
+      <div class="finalizar-bar">
+        <button class="btn-finalizar" id="btn-finalizar" onclick="abrirModal()" disabled>
+          Finalizar pedido
+          <span class="btn-finalizar-items" id="btn-fin-label">0 productos</span>
+        </button>
+      </div>
     </div>
 
   </div><!-- split-layout -->
-
-  <!-- Barra finalizar -->
-  <div class="finalizar-bar">
-    <button class="btn-finalizar" id="btn-finalizar" onclick="abrirModal()" disabled>
-      Finalizar pedido
-      <span class="btn-finalizar-items" id="btn-fin-label">0 productos</span>
-    </button>
-  </div>
 
 </div><!-- scr-portal -->
 
@@ -640,13 +652,11 @@
 
     res.innerHTML = hits.map(p => {
       const enC = !!carrito[p.codigo];
-      const precio = p.precio ? '$' + Number(p.precio).toLocaleString('es-AR') : '';
       return `<div class="buscar-item ${enC?'en-carrito':''}" onclick="seleccionarDeBusqueda('${p.codigo}')">
         <div class="buscar-item-info">
           <span class="buscar-item-cod">${p.codigo}</span>
           <span class="buscar-item-nom">${p.nombre}</span>
         </div>
-        <span class="buscar-item-precio">${precio}</span>
         ${enC ? '<span class="buscar-item-badge">✅</span>' : ''}
       </div>`;
     }).join('');
@@ -808,9 +818,6 @@
     const enCarrito = carrito[p.codigo];
     const qty = enCarrito ? enCarrito.qty : 0;
     const cardClass = enCarrito ? 'prod-card en-carrito' : 'prod-card';
-
-    const precio = Number(p.precio || 0);
-    const tachado = p.precio_tachado ? Number(p.precio_tachado) : null;
     const promoTipo = p.promo_tipo || 'normal';
 
     let promoTag = '';
@@ -818,9 +825,6 @@
     else if(promoTipo === 'oferta_especial') promoTag = `<span class="prod-promo-tag" style="background:#D1FAE5;color:#065F46;">⚡ OFERTA</span>`;
     else if(promoTipo === 'escala') promoTag = `<span class="prod-promo-tag" style="background:#EDE9FE;color:#5B21B6;">📊 ESCALA</span>`;
     else if(promoTipo === 'con_compra') promoTag = `<span class="prod-promo-tag" style="background:#E0F2FE;color:#0369A1;">🎁 PROMO</span>`;
-
-    const precioStr = precio ? `$${precio.toLocaleString('es-AR')}` : '—';
-    const tachStr   = tachado ? `<span class="prod-precio-tach">$${tachado.toLocaleString('es-AR')}</span>` : '';
 
     const controles = enCarrito
       ? `<div class="qty-wrap">
@@ -831,21 +835,16 @@
          <button class="btn-borrar" onclick="quitarDelCarrito('${p.codigo}')" title="Quitar">✕</button>`
       : `<button class="qty-btn mas agregar" onclick="agregarAlCarrito('${p.codigo}')" title="Agregar">+</button>`;
 
-    const badge = enCarrito
-      ? `<div class="en-carrito-badge">✅ En pedido</div>`
-      : '';
+    const badge = enCarrito ? `<div class="en-carrito-badge">✅ En pedido</div>` : '';
 
     return `
       <div class="${cardClass}" id="pcard-${p.codigo}">
         <div class="prod-info">
           <div><span class="prod-codigo">${p.codigo}</span>${promoTag}</div>
-          <div class="prod-nombre" title="${p.nombre}">${p.nombre}</div>
-          <div>${precioStr}${tachStr}</div>
+          <div class="prod-nombre">${p.nombre}</div>
           ${badge}
         </div>
-        <div class="prod-controles">
-          ${controles}
-        </div>
+        <div class="prod-controles">${controles}</div>
       </div>`;
   }
 
@@ -903,21 +902,16 @@
 
   function renderResumen(){
     const items = Object.values(carrito);
-    let html = items.map(p => {
-      const precio = Number(p.precio || 0);
-      return `<div class="resumen-item">
-        <span>${p.qty}x ${p.nombre.substring(0,32)}${p.nombre.length>32?'...':''}</span>
-        <span style="font-weight:600;">${precio ? '$'+( precio * p.qty).toLocaleString('es-AR') : '—'}</span>
-      </div>`;
-    }).join('');
-
-    const totalCalc = items.reduce((s,p) => s + (Number(p.precio||0) * p.qty), 0);
-    if(totalCalc > 0){
-      html += `<div class="resumen-total">
-        <span>Total orientativo</span>
-        <span>$${totalCalc.toLocaleString('es-AR')}</span>
-      </div>`;
-    }
+    const totalItems = items.reduce((s,p) => s + p.qty, 0);
+    let html = items.map(p =>
+      `<div class="resumen-item">
+        <span>${p.qty}x ${p.nombre.substring(0,38)}${p.nombre.length>38?'...':''}</span>
+        <span style="font-weight:600;color:#6b7280;">×${p.qty}</span>
+      </div>`
+    ).join('');
+    html += `<div style="margin-top:10px;padding:8px 10px;background:#FEF3C7;border-radius:8px;font-size:12px;color:#92400E;line-height:1.5;">
+      💜 <strong>Tu vendedora confirma el precio total</strong> con todos los descuentos y ofertas aplicados antes de que hagas el pago.
+    </div>`;
     document.getElementById('modal-resumen').innerHTML = html;
   }
 

@@ -289,10 +289,8 @@
               📂 Seleccionar archivo .xlsx
               <input type="file" id="xlsFile" accept=".xlsx,.xls" style="display:none" onchange="cargarExcelCatalogo(this)">
             </label>
-            <a id="xlsDescargar" href="#" download="plantilla_catalogo_violetta.xlsx" style="display:none">
-              <button class="btn-sm ghost">⬇️ Descargar plantilla</button>
-            </a>
-            <button class="btn-sm ghost" onclick="descargarPlantillaXls()" style="font-size:12px;">⬇️ Descargar plantilla vacía</button>
+            <button class="btn-sm ghost" onclick="descargarPlantillaXls()" style="font-size:12px;">⬇️ Plantilla vacía</button>
+            <button class="btn-sm success" onclick="descargarCatalogoDesdeDB()" style="font-size:12px;background:#059669;">⬇️ Descargar catálogo actual</button>
           </div>
 
           <!-- Preview tabla -->
@@ -895,6 +893,41 @@ function copiarSQL(){navigator.clipboard.writeText(document.getElementById('sqlC
     toast(`✅ ${ok} productos importados a la base de datos`);
     document.getElementById('xlsGuardarBtn').disabled = false;
     if(typeof renderCatalogo === 'function') renderCatalogo();
+  }
+
+  async function descargarCatalogoDesdeDB(){
+    if(typeof XLSX === 'undefined'){ toast('❌ Librería XLSX no cargada'); return; }
+    toast('⏳ Descargando catálogo...');
+    try{
+      // Traer todos los productos (limit alto para traer todo)
+      const prods = await sGet('productos', 'order=campana.asc,nombre.asc&limit=2000&select=codigo,nombre,precio,precio_tachado,promo_tipo,promo_detalle,promo_grupo,precio_promo_2,pagina,campana');
+      if(!prods.length){ toast('⚠️ No hay productos en la base'); return; }
+
+      const COLS = ['codigo','nombre','precio','precio_tachado','promo_tipo','promo_detalle','promo_grupo','precio_promo_2','pagina','campana'];
+      const wsData = [COLS];
+      prods.forEach(p => {
+        wsData.push(COLS.map(c => p[c] ?? ''));
+      });
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      ws['!cols'] = [{wch:10},{wch:60},{wch:12},{wch:15},{wch:18},{wch:50},{wch:22},{wch:14},{wch:10},{wch:10}];
+
+      // Forzar codigo como texto
+      prods.forEach((_, i) => {
+        const cell = ws[XLSX.utils.encode_cell({r:i+1, c:0})];
+        if(cell){ cell.t='s'; cell.z='@'; }
+      });
+
+      // Nombre de hoja según campaña del primer producto
+      const camp = (prods[0]?.campana || 'X-XX').replace('Campaña ','').replace('/','_');
+      XLSX.utils.book_append_sheet(wb, ws, `Productos ${camp}`);
+      const fecha = new Date().toISOString().slice(0,10).replace(/-/g,'');
+      XLSX.writeFile(wb, `catalogo_violetta_${camp}_${fecha}.xlsx`);
+      toast(`✅ ${prods.length} productos descargados`);
+    }catch(e){
+      toast('❌ Error: ' + e.message);
+    }
   }
 
   function descargarPlantillaXls(){
