@@ -871,9 +871,19 @@ function copiarSQL(){navigator.clipboard.writeText(document.getElementById('sqlC
         campana:       p.campana
       }));
       try{
-        const res = await sPost('productos', batch);
-        if(res) ok += batch.length; else err += batch.length;
-      }catch(e){ err += batch.length; }
+        // Upsert real: si ya existe (codigo+campana), actualiza todos los campos incluyendo pagina
+        const res = await fetch(`${SU}/rest/v1/productos`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SK,
+            'Authorization': 'Bearer ' + SK,
+            'Prefer': 'resolution=merge-duplicates,return=representation'
+          },
+          body: JSON.stringify(batch)
+        });
+        if(res.ok) ok += batch.length; else { err += batch.length; console.error(await res.text()); }
+      }catch(e){ err += batch.length; console.error(e); }
       const pct = Math.round((i+batchSize)/validos.length*100);
       bar.style.width = Math.min(pct,100)+'%';
       txt.textContent = `Guardando... ${Math.min(i+batchSize,validos.length)} de ${validos.length}`;
