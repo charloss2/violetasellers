@@ -143,15 +143,13 @@
       flex: 1;
       overflow: auto;
       -webkit-overflow-scrolling: touch;
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
       cursor: grab;
+      /* No usar flex con justify-content:center — corta el lado izquierdo al hacer zoom */
     }
     .folleto-canvas-scroll:active { cursor: grabbing; }
     #folleto-canvas {
       display: block;
-      /* touch-action: pan permite scroll con un dedo; el pinch lo manejamos nosotros */
+      flex-shrink: 0;
       touch-action: pan-x pan-y;
     }
 
@@ -410,7 +408,9 @@
 
       <!-- Canvas scrolleable con pinch zoom nativo -->
       <div class="folleto-canvas-scroll" id="folleto-scroll">
-        <canvas id="folleto-canvas"></canvas>
+        <div id="folleto-inner" style="display:flex;justify-content:center;align-items:flex-start;padding:8px 0;">
+          <canvas id="folleto-canvas"></canvas>
+        </div>
         <div class="folleto-loading" id="folleto-loading">
           <div class="spinner"></div>
           <span>Cargando folleto...</span>
@@ -700,8 +700,19 @@
     canvas.height = viewport.height;
 
     // CSS: tamaño visual = resolución / dpr (se ve nítido en retina)
-    canvas.style.width  = (viewport.width  / dpr) + 'px';
-    canvas.style.height = (viewport.height / dpr) + 'px';
+    const visualW = viewport.width  / dpr;
+    const visualH = viewport.height / dpr;
+    canvas.style.width  = visualW + 'px';
+    canvas.style.height = visualH + 'px';
+
+    // El inner debe ser al menos tan ancho como el scroll (para centrar cuando es chico)
+    // y al menos tan ancho como el canvas (para scroll hacia izquierda cuando es grande)
+    const inner = document.getElementById('folleto-inner');
+    if(inner){
+      const minW = Math.max(scroll.offsetWidth, visualW);
+      inner.style.width    = minW + 'px';
+      inner.style.minWidth = minW + 'px';
+    }
 
     await page.render({canvasContext: ctx, viewport}).promise;
     renderProductosDePagina(num);
