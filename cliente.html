@@ -557,11 +557,11 @@
     // Cargar vendedora
     await cargarVendedora();
 
-    // Cargar catálogo
+    // Cargar catálogo PRIMERO, esperar que termine
     if(campanaParam) await cargarCatalogo(campanaParam);
 
-    // Cargar folleto PDF
-    cargarFolleto();
+    // Cargar folleto PDF DESPUÉS (para que el catálogo ya esté disponible cuando renderice)
+    await cargarFolleto();
   }
 
   async function cargarVendedora(){
@@ -578,15 +578,24 @@
   }
 
   async function cargarCatalogo(numCamp){
-    const campStr    = numCamp.padStart(2,'0') + '/26';
-    const campBD     = 'Campaña ' + numCamp + '/26';
-    const campSinCero = numCamp + '/26';
+    // Intentar múltiples formatos de campaña
+    const variantes = [
+      'campana=eq.' + encodeURIComponent('Campaña ' + numCamp + '/26'),
+      'campana=eq.' + encodeURIComponent(numCamp.padStart(2,'0') + '/26'),
+      'campana=eq.' + encodeURIComponent(numCamp + '/26'),
+    ];
     try{
-      let prods = await sGet('productos', 'campana=eq.' + encodeURIComponent(campBD) + '&order=nombre.asc');
-      if(!prods.length) prods = await sGet('productos', 'campana=eq.' + encodeURIComponent(campStr) + '&order=nombre.asc');
-      if(!prods.length) prods = await sGet('productos', 'campana=eq.' + encodeURIComponent(campSinCero) + '&order=nombre.asc');
+      let prods = [];
+      for(const q of variantes){
+        prods = await sGet('productos', q + '&order=nombre.asc');
+        if(prods.length) break;
+      }
       allProductosCli = prods;
       document.getElementById('camp-label').textContent = 'Campaña ' + numCamp + '/26';
+      console.log(`Catálogo cargado: ${prods.length} productos`);
+      // Verificar cuántos tienen pagina
+      const conPag = prods.filter(p => p.pagina).length;
+      console.log(`Con pagina: ${conPag} / Sin pagina: ${prods.length - conPag}`);
     }catch(e){ console.error('Error cargando catálogo:', e); }
   }
 
@@ -689,13 +698,26 @@
     titulo.textContent = numPag ? `Página ${numPag}` : 'Todos los productos';
     countLabel.textContent = prods.length ? `${prods.length} producto${prods.length>1?'s':''}` : '';
 
-    if(!prods.length){
+    if(!prods.length && numPag !== null){
+      // Si no hay productos para esta página, mostrar aviso pero también
+      // un botón para ver todos (por si el catálogo aún no tiene páginas asignadas)
+      const totalCat = allProductosCli.length;
       lista.innerHTML = `
         <div class="sin-productos">
           <div class="sin-productos-emoji">🔍</div>
-          <p>No hay productos registrados<br>para esta página del folleto.<br>
-          <span style="color:var(--violet);font-weight:600;">Continuá navegando →</span></p>
+          <p>No hay productos asignados<br>a esta página del folleto.</p>
+          ${totalCat > 0 ? `<button onclick="renderProductosDePagina(null)"
+            style="margin-top:12px;background:var(--violet);color:white;border:none;
+            border-radius:10px;padding:10px 20px;font-size:13px;font-weight:700;
+            cursor:pointer;font-family:inherit;">
+            Ver todos los productos (${totalCat})
+          </button>` : '<p style="color:#ef4444;font-size:12px;">Sin catálogo cargado</p>'}
         </div>`;
+      return;
+    }
+
+    if(!prods.length){
+      lista.innerHTML = `<div class="sin-productos"><div class="sin-productos-emoji">📭</div><p>Sin productos</p></div>`;
       return;
     }
 
