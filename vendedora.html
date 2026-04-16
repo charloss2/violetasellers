@@ -723,7 +723,7 @@
           </div>
           <span class="badge ${p.estado||'pendiente'}">${bm[p.estado]||'•'} ${p.estado||'pendiente'}</span>
         </div>
-        <div class="pedido-productos">${(p.productos||'Sin productos').split('|').map(pr=>{
+        <div class="pedido-productos">${(p.productos||'Sin productos').split(/[|\n]/).map(pr=>{
           const m=pr.trim().match(/^(\d+)x\s+(.+)$/i);
           const txt = m&&parseInt(m[1])>1
             ? '<span style="background:#7c3aed;color:white;font-size:10px;font-weight:700;padding:1px 5px;border-radius:3px;margin-right:3px;">'+m[1]+'×</span>'+m[2].trim()
@@ -1075,7 +1075,7 @@
       // Mostrar igual los ítems con inputs vacíos
     }
 
-    const rawItems = productosStr.split('|').map(s=>s.trim()).filter(Boolean);
+    const rawItems = productosStr.split(/[|\n]/).map(s=>s.trim()).filter(Boolean);
 
     // Cargar precios ya guardados si existen
     let preciosGuardados = [];
@@ -2676,7 +2676,7 @@ ${ped.pago==='Transferencia'?`<h2>💳 Datos para transferencia</h2>${cbusHtml}`
 
   function enviarPushPedidoNuevo(pedido){
     if(!_pushPermitido || Notification.permission !== 'granted') return;
-    const productos = (pedido.productos||'').split('|').slice(0,2).map(p=>p.trim()).join(', ');
+    const productos = (pedido.productos||'').split(/[|\n]/).slice(0,2).map(p=>p.trim()).join(', ');
     const nro = pedido.numero_pedido ? '#'+pedido.numero_pedido+' — ' : '';
     new Notification('🛍️ Nuevo pedido ' + nro + (pedido.nombre||''), {
       body: productos + (pedido.campana ? ' · '+pedido.campana : ''),
