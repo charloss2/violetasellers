@@ -669,11 +669,21 @@
         sGet('productos','order=campana.asc,nombre.asc').catch(()=>[])
       ]);
       // Clientes propios solamente
-      const tels=[...new Set(misPedidos.map(p=>p.telefono).filter(Boolean))];
       const ids=[...new Set(misPedidos.map(p=>p.cliente_id).filter(Boolean))];
+      const tels=[...new Set(misPedidos.map(p=>p.telefono).filter(Boolean))];
       if(ids.length) misClientes=await sGet('clientes',`id=in.(${ids.join(',')})`);
       else if(tels.length) misClientes=await sGet('clientes',`telefono=in.(${tels.map(t=>`"${t}"`).join(',')})`);
       else misClientes=[];
+
+      // Normalizar: asegurar que nombre y fecha estén disponibles directo en el objeto
+      misPedidos = misPedidos.map(p => ({
+        ...p,
+        _nombre: p.nombre_cliente || p.nombre || '—',
+        _fecha: p.created_at
+          ? new Date(p.created_at).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'})
+          : (p.fecha || '—'),
+      }));
+
       actualizarStats();
       filtrar();
     }catch(e){document.getElementById('pedidos-container').innerHTML=`<div class="empty">❌ ${e.message}</div>`;}
@@ -691,7 +701,8 @@
     const est=document.getElementById('filtroEstado')?.value||'';
     const lug=document.getElementById('filtroLugar')?.value||'';
     renderPedidos(misPedidos.filter(p=>{
-      const ms=!s||(p.nombre||'').toLowerCase().includes(s)||(p.telefono||'').includes(s)||String(p.numero_pedido||'').includes(s);
+      const nom = (p._nombre||p.nombre_cliente||p.nombre||'').toLowerCase();
+      const ms=!s||nom.includes(s)||(p.telefono||'').includes(s)||String(p.numero_pedido||'').includes(s);
       return ms&&(!est||p.estado===est)&&(!lug||p.lugar===lug);
     }));
   }
@@ -703,8 +714,8 @@
       <div class="pedido-card" id="pc_${p.id}">
         <div class="pedido-card-header">
           <div>
-            <div class="pedido-nombre">${p.nombre||'—'} ${p.numero_pedido?'<span style="font-size:11px;font-weight:600;color:var(--accent3);margin-left:6px;">#'+p.numero_pedido+'</span>':''}</div>
-            <div class="pedido-fecha">📅 ${p.fecha||'—'} · 
+            <div class="pedido-nombre">${p._nombre} ${p.numero_pedido?'<span style="font-size:11px;font-weight:600;color:var(--accent3);margin-left:6px;">#'+p.numero_pedido+'</span>':''}</div>
+            <div class="pedido-fecha">📅 ${p._fecha} · 
               <select class="lugar-select" onchange="cambiarLugar('${p.id}',this.value)" title="Cambiar lugar de origen">
                 ${['Escuela','Trabajo','Vecino/a','Familiar','Gimnasio','Redes sociales','Otro'].map(l=>`<option value="${l}" ${(p.lugar||'Otro')===l?'selected':''}>${l}</option>`).join('')}
               </select>
@@ -1442,7 +1453,7 @@
     const msg = [
       '💜 *Violetta Seller*',
       '',
-      `Hola ${ped.nombre||''}! Te confirmamos el precio de tu pedido${nro} 🎉`,
+      `Hola ${ped.nombre_cliente||ped.nombre||''}! Te confirmamos el precio de tu pedido${nro} 🎉`,
       '',
       '🛍️ *Detalle:*',
       itemsTexto,
@@ -1494,7 +1505,7 @@
 
     const fecha=new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'});
     const html=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
-<title>Pedido ${ped.numero_pedido?'#'+ped.numero_pedido+' — ':''}${ped.nombre||''} — Violetta Seller</title>
+<title>Pedido ${ped.numero_pedido?'#'+ped.numero_pedido+' — ':''}${ped.nombre_cliente||ped.nombre||''} — Violetta Seller</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
   *{margin:0;padding:0;box-sizing:border-box;}
@@ -1542,7 +1553,7 @@
 
 <h2>📋 Datos del cliente</h2>
 <div class="info-grid">
-  <div class="info-box"><div class="label">Nombre</div><div class="val">${ped.nombre||'—'}</div></div>
+  <div class="info-box"><div class="label">Nombre</div><div class="val">${ped.nombre_cliente||ped.nombre||'—'}</div></div>
   <div class="info-box"><div class="label">Teléfono / WhatsApp</div><div class="val">${ped.telefono||'—'}</div></div>
   <div class="info-box"><div class="label">Forma de pago</div><div class="val">${ped.pago||'—'}</div></div>
   <div class="info-box"><div class="label">Dirección de entrega</div><div class="val">${ped.direccion||'—'}</div></div>
@@ -2249,7 +2260,7 @@ ${ped.pago==='Transferencia'?`<h2>💳 Datos para transferencia</h2>${cbusHtml}`
           qty:      it.qty||1,
           precio:   it.precio||0,
           subtotal: it.subtotal||(it.precio*(it.qty||1))||0,
-          cliente:  p.nombre||'—',
+          cliente: p.nombre_cliente||p.nombre||'—',
           campana:  p.campana||'—',
           fecha:    p.fecha||p.created_at||'—',
           estado:   p.estado||'—',
