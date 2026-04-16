@@ -665,7 +665,7 @@
     document.getElementById('pedidos-container').innerHTML='<div class="empty">🔄 Cargando...</div>';
     try{
       [misPedidos, allProductos]=await Promise.all([
-        sGet('pedidos',`vendedora_id=eq.${currentUser.id}&order=created_at.desc`),
+        sGet('pedidos',`select=*&vendedora_id=eq.${currentUser.id}&order=created_at.desc`),
         sGet('productos','order=campana.asc,nombre.asc').catch(()=>[])
       ]);
       // Clientes propios solamente

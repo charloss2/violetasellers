@@ -474,7 +474,7 @@ function showSec(id){
 async function cargarTodo(){
   if(!SU||!SK){document.getElementById('dash-ped').innerHTML='<div class="empty">⚙️ Configurá Supabase primero en Configuración</div>';return;}
   try{
-    [allPeds,allVends,allClis,allProds]=await Promise.all([sGet('pedidos','order=created_at.desc'),sGet('vendedoras','order=nombre.asc'),sGet('clientes','order=nombre.asc'),sGet('productos','order=campana.asc,nombre.asc')]);
+    [allPeds,allVends,allClis,allProds]=await Promise.all([sGet('pedidos','select=*&order=created_at.desc&limit=1000'),sGet('vendedoras','order=nombre.asc'),sGet('clientes','order=nombre.asc'),sGet('productos','order=campana.asc,nombre.asc')]);
     updStats();renderDash();renderVendedoras();renderPedidos();renderClientes();renderCatalogo();updFiltros();
   }catch(e){document.getElementById('dash-ped').innerHTML=`<div class="empty">❌ ${e.message}</div>`;}
 }
@@ -493,7 +493,7 @@ function renderDash(){
   const rows=allPeds.slice(0,12);
   if(!rows.length){document.getElementById('dash-ped').innerHTML='<div class="empty">Sin pedidos</div>';return;}
   let h='<table><thead><tr><th>Fecha</th><th>Cliente</th><th>Vendedora</th><th>Campaña</th><th>Total</th><th>Estado</th></tr></thead><tbody>';
-  rows.forEach(p=>{h+=`<tr><td style="font-weight:700;color:var(--accent);font-size:12px;">${p.numero_pedido?'#'+p.numero_pedido:'—'}</td><td style="font-size:11px;color:var(--text3)">${p.fecha||'—'}</td><td>${p.nombre||'—'}</td><td style="font-size:11px">${p.vendedora_username||'—'}</td><td style="font-size:11px">${p.campana||'—'}</td><td style="font-weight:700;color:var(--accent)">${p.total?'$'+Number(p.total).toLocaleString('es-AR'):'—'}</td><td>${sBadge(p.estado)}</td></tr>`;});
+  rows.forEach(p=>{h+=`<tr><td style="font-weight:700;color:var(--accent);font-size:12px;">${p.numero_pedido?'#'+p.numero_pedido:'—'}</td><td style="font-size:11px;color:var(--text3)">${p.fecha||p.created_at?new Date(p.created_at).toLocaleDateString('es-AR'):''}</td><td>${p.nombre_cliente||p.nombre||'—'}</td><td style="font-size:11px">${p.vendedora_username||'—'}</td><td style="font-size:11px">${p.campana||'—'}</td><td style="font-weight:700;color:var(--accent)">${p.total?'$'+Number(p.total).toLocaleString('es-AR'):'—'}</td><td>${sBadge(p.estado)}</td></tr>`;});
   document.getElementById('dash-ped').innerHTML=h+'</tbody></table>';
 }
 
@@ -503,7 +503,7 @@ function renderPedidos(){
   const vend=document.getElementById('filtVend')?.value||'';
   const camp=document.getElementById('filtCamp')?.value||'';
   let f=allPeds.filter(p=>{
-    const ms=!s||(p.nombre||'').toLowerCase().includes(s)||(p.telefono||'').includes(s)||(p.dni_cliente||'').includes(s)||String(p.numero_pedido||'').includes(s);
+    const ms=!s||(p.nombre_cliente||p.nombre||'').toLowerCase().includes(s)||(p.telefono||'').includes(s)||(p.dni_cliente||'').includes(s)||String(p.numero_pedido||'').includes(s);
     return ms&&(!est||p.estado===est)&&(!vend||p.vendedora_username===vend)&&(!camp||p.campana===camp);
   });
   if(!f.length){document.getElementById('all-ped').innerHTML='<div class="empty">Sin resultados</div>';return;}
@@ -516,12 +516,12 @@ function renderPedidos(){
       :`<div class="total-edit"><input type="number" placeholder="$0" id="tot_${p.id}"><button onclick="setTotal('${p.id}')">✓</button></div>`;
     const lugarSel=`<select style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px;border-radius:6px;font-size:11px;font-family:inherit;" onchange="cambiarLugar('${p.id}',this.value)">${lugarOpts.map(l=>`<option value="${l}" ${(p.lugar||'Otro')===l?'selected':''}>${l}</option>`).join('')}</select>`;
     const estadoSel=`<select style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px;border-radius:6px;font-size:11px;font-family:inherit;" onchange="cambiarEstado('${p.id}',this.value)"><option value="pendiente" ${p.estado==='pendiente'?'selected':''}>⏳</option><option value="listo" ${p.estado==='listo'?'selected':''}>✅</option><option value="entregado" ${p.estado==='entregado'?'selected':''}>📬</option><option value="cobrado" ${p.estado==='cobrado'?'selected':''}>💰</option><option value="cancelado" ${p.estado==='cancelado'?'selected':''}>❌</option></select>`;
-    const nombre=encodeURIComponent(p.nombre||'');
+    const nombre=encodeURIComponent(p.nombre_cliente||p.nombre||'');
     const delBtn=`<button class="btn-sm danger" style="padding:5px 8px;" onclick="confirmarEliminar('${p.id}','${nombre}')" title="Eliminar pedido">🗑️</button>`;
     h+=`<tr>
       <td style="font-weight:700;color:var(--accent);font-size:12px;">${nro}</td>
-      <td style="font-size:11px;color:var(--text3)">${p.fecha||'—'}</td>
-      <td><strong>${p.nombre||'—'}</strong><br><span style="font-size:10px;color:var(--text3)">${p.dni_cliente||''}</span></td>
+      <td style="font-size:11px;color:var(--text3)">${p.created_at ? new Date(p.created_at).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'}) : (p.fecha||'—')}</td>
+      <td><strong>${p.nombre_cliente||p.nombre||'—'}</strong><br><span style="font-size:10px;color:var(--text3)">${p.dni_cliente||''}</span></td>
       <td style="font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.productos||'—'}</td>
       <td style="font-size:11px">${p.vendedora_username||'—'}</td>
       <td>${lugarSel}</td>
@@ -583,7 +583,7 @@ function buildReportes(){
   let vh='<table><thead><tr><th>Vendedora</th><th>Pedidos</th><th>Facturado</th></tr></thead><tbody>';
   Object.entries(vr).sort((a,b)=>b[1].pedidos-a[1].pedidos).forEach(([v,d])=>{vh+=`<tr><td><strong>${v}</strong></td><td>${d.pedidos}</td><td style="color:var(--accent)">${d.total?'$'+d.total.toLocaleString('es-AR'):'—'}</td></tr>`;});
   document.getElementById('rep-vend-tbl').innerHTML=vh+'</tbody></table>';
-  const cr={};allPeds.forEach(p=>{const k=p.nombre||'—';if(!cr[k])cr[k]={pedidos:0,dni:p.dni_cliente||''};cr[k].pedidos++;});
+  const cr={};allPeds.forEach(p=>{const k=p.nombre_cliente||p.nombre||'—';if(!cr[k])cr[k]={pedidos:0,dni:p.dni_cliente||''};cr[k].pedidos++;cr[k].tel=p.telefono||'';});
   let ch='<table><thead><tr><th>Cliente</th><th>DNI</th><th>Pedidos</th></tr></thead><tbody>';
   Object.entries(cr).sort((a,b)=>b[1].pedidos-a[1].pedidos).forEach(([n,d])=>{ch+=`<tr><td><strong>${n}</strong></td><td>${d.dni}</td><td><span class="badge listo">${d.pedidos}</span></td></tr>`;});
   document.getElementById('rep-cli-tbl').innerHTML=ch+'</tbody></table>';
@@ -964,7 +964,7 @@ function imprimirReporteAdmin(){
     camps[c].pedidos++;
     if(p.total)camps[c].total+=Number(p.total);
     if(p.estado==='cobrado'&&p.total)camps[c].cobrado+=Number(p.total);
-    if(p.nombre)camps[c].clientes.add(p.nombre);
+    if(p.nombre_cliente||p.nombre)camps[c].clientes.add(p.nombre_cliente||p.nombre);
   });
   const campRows=Object.keys(camps).sort().map(c=>`
     <tr><td>${c}</td><td class="center">${camps[c].pedidos}</td>
@@ -1144,7 +1144,7 @@ function buildAdminProveedor(){
         qty:       it.qty||1,
         precio:    it.precio||0,
         subtotal:  it.subtotal||(it.precio*(it.qty||1))||0,
-        cliente:   p.nombre||'—',
+        cliente: p.nombre_cliente||p.nombre||'—',
         vendedora: p.vendedora_username||'—',
         campana:   p.campana||'—',
         fecha:     p.fecha||p.created_at||'—',
