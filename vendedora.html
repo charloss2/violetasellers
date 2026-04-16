@@ -2385,7 +2385,7 @@ ${ped.pago==='Transferencia'?`<h2>💳 Datos para transferencia</h2>${cbusHtml}`
 
   // Genera hoja ItensPedido con Nro / SKU / Quantidade
   function _buildItensPedido(rows){
-    const wsData = [["Nro","SKU","Quantidade"]];
+    const wsData = [["Nro","Quantidade","Quantidade"]];
     rows.forEach((r, i) => {
       wsData.push([i+1, String(r.codigo||r.sku||''), parseInt(r.qty)||1]);
     });

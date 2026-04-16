@@ -382,6 +382,7 @@
           <button class="btn-sm ghost" onclick="apSelAll(true)">✅ Seleccionar todos</button>
           <button class="btn-sm ghost" onclick="apSelAll(false)">⬜ Deseleccionar todos</button>
           <button class="btn-sm primary" onclick="imprimirAdminProveedor()">🖨️ Imprimir selección</button>
+          <button class="btn-sm success" onclick="exportarExcelAdminProveedor()" style="background:#059669;">📥 Excel Violetta</button>
         </div>
       </div>
 
@@ -1258,6 +1259,47 @@ function actualizarResumenAdmin(){
     ${Object.keys(agrup).length} producto${Object.keys(agrup).length!==1?'s distintos':' distinto'} · 
     Vendedoras: <strong>${vends}</strong> · 
     Total: <strong style="color:var(--accent);">$${totalSel.toLocaleString('es-AR')}</strong>`;
+}
+
+function exportarExcelAdminProveedor(){
+  if(typeof XLSX === 'undefined'){ toast('❌ Recargá la página (falta XLSX)','err'); return; }
+  const sel = apRows.filter(r => r.selected);
+  if(!sel.length){ toast('⚠️ Seleccioná al menos un ítem','err'); return; }
+
+  // Agrupar por SKU sumando cantidades
+  const agrup = {};
+  sel.forEach(r => {
+    const sku = String(r.codigo || r.sku || '').trim();
+    if(!sku) return;
+    if(!agrup[sku]) agrup[sku] = { sku, qty: 0 };
+    agrup[sku].qty += parseInt(r.qty) || 1;
+  });
+
+  const rows = Object.values(agrup);
+  if(!rows.length){ toast('⚠️ Ningún ítem tiene código SKU — verificá el catálogo','err'); return; }
+
+  // Encabezados exactos que requiere la web de Violetta
+  const wsData = [['Nro', 'Quantidade', 'Quantidade']];
+  rows.forEach((r, i) => wsData.push([i + 1, r.sku, r.qty]));
+
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Forzar SKU como texto (col B)
+  rows.forEach((_, i) => {
+    const cell = ws[XLSX.utils.encode_cell({r: i+1, c: 1})];
+    if(cell){ cell.t = 's'; cell.z = '@'; }
+  });
+  ws['!cols'] = [{wch:6},{wch:14},{wch:12}];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'ItensPedido');
+
+  const camp = (document.getElementById('apFiltCamp')?.value || 'pedido').replace(/\//g,'-');
+  const fecha = new Date().toISOString().slice(0,10).replace(/-/g,'');
+  XLSX.writeFile(wb, `pedido_violetta_global_${camp}_${fecha}.xlsx`);
+
+  const totalUni = rows.reduce((s,r) => s + r.qty, 0);
+  toast(`✅ ${rows.length} productos · ${totalUni} unidades`);
 }
 
 function imprimirAdminProveedor(){
