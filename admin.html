@@ -434,8 +434,6 @@
     <div class="field"><label>Precio ($)</label><input type="number" id="mProdPrecio"></div>
     <div class="field"><label>Campaña</label><input type="text" id="mProdCamp" placeholder="Ej: Campaña 14"></div>
     <div class="field"><label>Código (opcional)</label><input type="text" id="mProdCod"></div>
-    <div class="field"><label>Categoría</label><input type="text" id="mProdCat"></div>
-    <div class="field"><label>Descripción</label><textarea id="mProdDesc"></textarea></div>
     <div class="modal-btns"><button class="cancel" onclick="cerrarModal('modalProd')">Cancelar</button><button class="confirm" onclick="guardarProducto()">Guardar</button></div>
   </div>
 </div>
@@ -613,8 +611,36 @@ function renderClientes(){
   let f=allClis.filter(c=>!s||(c.nombre||'').toLowerCase().includes(s)||(c.dni||'').includes(s));
   if(!f.length){document.getElementById('cli-list').innerHTML='<div class="empty">Sin clientes</div>';return;}
   let h='<table><thead><tr><th>Nombre</th><th>DNI</th><th>Teléfono</th><th>Dirección</th><th>Pedidos</th><th>Acciones</th></tr></thead><tbody>';
-  f.forEach(c=>{const t=allPeds.filter(p=>p.dni_cliente===c.dni||p.cliente_id===c.id).length;h+=`<tr><td><strong>${c.nombre}</strong></td><td>${c.dni||'—'}</td><td>${c.telefono||'—'}</td><td style="font-size:11px">${c.direccion||'—'}</td><td><span class="badge listo">${t}</span></td><td><button class="btn-sm ghost" onclick="editCli('${c.id}')">✏️ Editar</button></td></tr>`;});
+  f.forEach(c=>{
+    const t=allPeds.filter(p=>p.dni_cliente===c.dni||p.cliente_id===c.id).length;
+    h+=`<tr>
+      <td><strong>${c.nombre}</strong></td>
+      <td>${c.dni||'—'}</td>
+      <td>${c.telefono||'—'}</td>
+      <td style="font-size:11px">${c.direccion||'—'}</td>
+      <td><span class="badge listo">${t}</span></td>
+      <td>
+        <button class="btn-sm ghost" onclick="editCli('${c.id}')">✏️ Editar</button>
+        <button class="btn-sm danger" style="margin-left:4px;" onclick="eliminarCliente('${c.id}','${encodeURIComponent(c.nombre||'')}')" title="Eliminar cliente">🗑️</button>
+      </td>
+    </tr>`;
+  });
   document.getElementById('cli-list').innerHTML=h+'</tbody></table>';
+}
+
+async function eliminarCliente(id, nombreEnc){
+  const nombre = decodeURIComponent(nombreEnc||'');
+  const peds = allPeds.filter(p=>p.cliente_id===id).length;
+  let msg = '¿Eliminar a "'+nombre+'"?\nEsta acción no se puede deshacer.';
+  if(peds > 0) msg = '⚠️ Este cliente tiene '+peds+' pedido(s) registrado(s).\n\n'+msg;
+  if(!confirm(msg)) return;
+  try{
+    await sDel('clientes',id);
+    allClis=allClis.filter(c=>c.id!==id);
+    renderClientes();
+    document.getElementById('st-cli').textContent=allClis.length;
+    toast('✅ Cliente eliminado','ok');
+  }catch(e){ toast('❌ '+e.message,'err'); }
 }
 function abrirMCli(){document.getElementById('mCliId').value='';document.getElementById('mCliTit').textContent='Nuevo Cliente';['mCliNom','mCliDni','mCliTel','mCliDir'].forEach(id=>document.getElementById(id).value='');document.getElementById('modalCli').classList.add('open');}
 function editCli(id){const c=allClis.find(x=>x.id===id);if(!c)return;document.getElementById('mCliId').value=c.id;document.getElementById('mCliTit').textContent='Editar Cliente';document.getElementById('mCliNom').value=c.nombre;document.getElementById('mCliDni').value=c.dni||'';document.getElementById('mCliTel').value=c.telefono||'';document.getElementById('mCliDir').value=c.direccion||'';document.getElementById('modalCli').classList.add('open');}
@@ -630,14 +656,14 @@ function renderCatalogo(){
   const f=allProds.filter(p=>!camp||p.campana===camp);
   if(!f.length){document.getElementById('cat-list').innerHTML='<div class="empty">Sin productos.</div>';return;}
   let h='<table><thead><tr><th>Producto</th><th>Campaña</th><th>Categoría</th><th>Precio</th><th>Acciones</th></tr></thead><tbody>';
-  f.forEach(p=>{h+=`<tr><td><strong>${p.nombre}</strong>${p.descripcion?`<br><span style="font-size:10px;color:var(--text3)">${p.descripcion}</span>`:''}</td><td style="font-size:11px">${p.campana||'—'}</td><td style="font-size:11px">${p.categoria||'—'}</td><td style="font-weight:700;color:var(--accent)">${p.precio?'$'+Number(p.precio).toLocaleString('es-AR'):'—'}</td><td><div class="btns-row"><button class="btn-sm ghost" onclick="editProd('${p.id}')">✏️</button><button class="btn-sm danger" onclick="elimProd('${p.id}')">🗑️</button></div></td></tr>`;});
+  f.forEach(p=>{h+=`<tr><td><strong>${p.nombre}</strong><br><span style="font-size:10px;color:var(--text3)">${p.codigo||''}</span></td><td style="font-size:11px">${p.campana||'—'}</td><td style="font-size:11px">${p.promo_tipo||'—'}</td><td style="font-weight:700;color:var(--accent)">${p.precio?'$'+Number(p.precio).toLocaleString('es-AR'):'—'}</td><td><div class="btns-row"><button class="btn-sm ghost" onclick="editProd('${p.id}')">✏️</button><button class="btn-sm danger" onclick="elimProd('${p.id}')">🗑️</button></div></td></tr>`;});
   document.getElementById('cat-list').innerHTML=h+'</tbody></table>';
 }
-function abrirMProd(){document.getElementById('mProdId').value='';document.getElementById('mProdTit').textContent='Nuevo Producto';['mProdNom','mProdPrecio','mProdCamp','mProdCod','mProdCat','mProdDesc'].forEach(id=>document.getElementById(id).value='');document.getElementById('modalProd').classList.add('open');}
-function editProd(id){const p=allProds.find(x=>x.id===id);if(!p)return;document.getElementById('mProdId').value=p.id;document.getElementById('mProdTit').textContent='Editar Producto';document.getElementById('mProdNom').value=p.nombre;document.getElementById('mProdPrecio').value=p.precio||'';document.getElementById('mProdCamp').value=p.campana||'';document.getElementById('mProdCod').value=p.codigo||'';document.getElementById('mProdCat').value=p.categoria||'';document.getElementById('mProdDesc').value=p.descripcion||'';document.getElementById('modalProd').classList.add('open');}
+function abrirMProd(){document.getElementById('mProdId').value='';document.getElementById('mProdTit').textContent='Nuevo Producto';['mProdNom','mProdPrecio','mProdCamp','mProdCod'].forEach(id=>document.getElementById(id).value='');document.getElementById('modalProd').classList.add('open');}
+function editProd(id){const p=allProds.find(x=>x.id===id);if(!p)return;document.getElementById('mProdId').value=p.id;document.getElementById('mProdTit').textContent='Editar Producto';document.getElementById('mProdNom').value=p.nombre;document.getElementById('mProdPrecio').value=p.precio||'';document.getElementById('mProdCamp').value=p.campana||'';document.getElementById('mProdCod').value=p.codigo||'';document.getElementById('modalProd').classList.add('open');}
 async function guardarProducto(){
   const id=document.getElementById('mProdId').value;const nombre=document.getElementById('mProdNom').value.trim();if(!nombre){toast('Ingresá el nombre','err');return;}
-  const data={nombre,precio:parseFloat(document.getElementById('mProdPrecio').value)||null,campana:document.getElementById('mProdCamp').value.trim(),codigo:document.getElementById('mProdCod').value.trim(),categoria:document.getElementById('mProdCat').value.trim(),descripcion:document.getElementById('mProdDesc').value.trim()};
+  const data={nombre,precio:parseFloat(document.getElementById('mProdPrecio').value)||null,campana:document.getElementById('mProdCamp').value.trim(),codigo:document.getElementById('mProdCod').value.trim()};
   try{id?await sPatch('productos',id,data):await sPost('productos',data);toast('✅ Guardado','ok');cerrarModal('modalProd');await cargarTodo();}catch(e){toast('❌ '+e.message,'err');}
 }
 async function elimProd(id){if(!confirm('¿Eliminar producto?'))return;try{await sDel('productos',id);toast('🗑️ Eliminado');await cargarTodo();}catch(e){toast('❌ '+e.message,'err');}}
@@ -669,7 +695,7 @@ function renderAI(prods){
     <div class="prod-item-ai" id="aip_${i}">
       <input class="n" type="text" value="${p.nombre||''}" placeholder="Nombre" id="ain_${i}">
       <input class="p" type="number" value="${p.precio||''}" placeholder="Precio" id="aip2_${i}">
-      <input class="cat" type="text" value="${p.categoria||''}" placeholder="Categoría" id="aicat_${i}">
+
       <button class="del" onclick="document.getElementById('aip_${i}').remove()">✕</button>
     </div>`).join('');
   document.getElementById('aiProdsList').innerHTML=h;
@@ -680,7 +706,7 @@ async function guardarProdsAI(){
   const rows=document.querySelectorAll('.prod-item-ai');
   const camp=prompt('¿A qué campaña pertenecen estos productos? (Ej: Campaña 14)','Campaña ');
   if(!camp)return;
-  const prods=[...rows].map(r=>{const i=r.id.replace('aip_','');return{nombre:document.getElementById('ain_'+i)?.value||'',precio:parseFloat(document.getElementById('aip2_'+i)?.value)||null,categoria:document.getElementById('aicat_'+i)?.value||'',campana:camp};}).filter(p=>p.nombre);
+  const prods=[...rows].map(r=>{const i=r.id.replace('aip_','');return{nombre:document.getElementById('ain_'+i)?.value||'',precio:parseFloat(document.getElementById('aip2_'+i)?.value)||null,campana:camp};}).filter(p=>p.nombre);
   if(!prods.length){toast('Sin productos','err');return;}
   try{for(const p of prods)await sPost('productos',p);toast(`✅ ${prods.length} productos guardados`,'ok');document.getElementById('aiResult').style.display='none';await cargarTodo();}catch(e){toast('❌ '+e.message,'err');}
 }
