@@ -217,9 +217,16 @@
         flex-direction: column !important;
         height: auto !important;
       }
+      /* Estado 1: oculto */
       .folleto-panel.oculto { display: none !important; }
-      .folleto-panel:not(.oculto) {
+      /* Estado 2: parcial (default) */
+      .folleto-panel.parcial {
         height: 47vh !important;
+        flex: none !important;
+      }
+      /* Estado 3: fullscreen */
+      .folleto-panel.fullscreen {
+        height: calc(100vh - 56px - 72px) !important; /* pantalla - header - finalizar */
         flex: none !important;
       }
       .productos-panel {
@@ -656,25 +663,47 @@
 
   // ── TOGGLE FOLLETO (mobile) ───────────────────────────────
   let _mostrando = 'productos';
+  // Estados del folleto en mobile: 'oculto' → 'parcial' → 'full' → 'oculto' → ...
+  // _estadoFolleto arranca en 'oculto' (initToggleMobile lo pone así)
+  let _estadoFolleto = 'oculto';
+
   function toggleFolleto(){
+    if(window.innerWidth >= 768) return; // en desktop no hace nada
     const fp   = document.getElementById('folleto-panel');
     const btn  = document.getElementById('btn-toggle-folleto');
     const mnav = document.getElementById('mini-nav-paginas');
     if(!fp || !btn) return;
-    if(_mostrando === 'productos'){
-      // Mostrar folleto — ocultar mini nav
-      fp.classList.remove('oculto');
-      btn.textContent = '🛍️';
-      btn.title = 'Ver productos';
+
+    // Ciclo: oculto → parcial → full → oculto → ...
+    if(_estadoFolleto === 'oculto'){
+      // Mostrar parcial
+      fp.classList.remove('oculto','fullscreen');
+      fp.classList.add('parcial');
+      btn.textContent = '⛶'; // ícono pantalla completa
+      btn.title = 'Pantalla completa';
       if(mnav) mnav.classList.remove('visible');
+      _estadoFolleto = 'parcial';
       _mostrando = 'folleto';
-      if(pdfDoc && paginaActual) renderPagina(paginaActual);
+      if(pdfDoc && paginaActual) setTimeout(()=>renderPagina(paginaActual),50);
+
+    } else if(_estadoFolleto === 'parcial'){
+      // Mostrar fullscreen
+      fp.classList.remove('oculto','parcial');
+      fp.classList.add('fullscreen');
+      btn.textContent = '⊡'; // ícono reducir
+      btn.title = 'Reducir folleto';
+      _estadoFolleto = 'full';
+      _mostrando = 'folleto';
+      if(pdfDoc && paginaActual) setTimeout(()=>renderPagina(paginaActual),50);
+
     } else {
-      // Ocultar folleto — mostrar mini nav
+      // Ocultar → volver a mini nav
+      fp.classList.remove('parcial','fullscreen');
       fp.classList.add('oculto');
       btn.textContent = '📖';
       btn.title = 'Ver folleto';
       if(mnav) mnav.classList.add('visible');
+      _estadoFolleto = 'oculto';
       _mostrando = 'productos';
       sincronizarMiniNav();
     }
@@ -701,11 +730,13 @@
       const btn = document.getElementById('btn-toggle-folleto');
       const mnav= document.getElementById('mini-nav-paginas');
       if(fp && btn){
+        // Arrancar en estado oculto
+        fp.classList.remove('parcial','fullscreen');
         fp.classList.add('oculto');
         btn.textContent = '📖';
         btn.title = 'Ver folleto';
-        // Arrancar con mini nav visible (folleto oculto)
         if(mnav) mnav.classList.add('visible');
+        _estadoFolleto = 'oculto';
         _mostrando = 'productos';
       }
     }
