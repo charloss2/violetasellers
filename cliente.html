@@ -731,14 +731,14 @@
       const btn = document.getElementById('btn-toggle-folleto');
       const mnav= document.getElementById('mini-nav-paginas');
       if(fp && btn){
-        // Arrancar en estado oculto
-        fp.classList.remove('parcial','fullscreen');
-        fp.classList.add('oculto');
-        btn.textContent = '📖';
-        btn.title = 'Ver folleto';
-        if(mnav) mnav.classList.add('visible');
-        _estadoFolleto = 'oculto';
-        _mostrando = 'productos';
+        // Arrancar en estado parcial (folleto visible ~47%)
+        fp.classList.remove('oculto','fullscreen');
+        fp.classList.add('parcial');
+        btn.textContent = '⛶';
+        btn.title = 'Pantalla completa';
+        if(mnav) mnav.classList.remove('visible');
+        _estadoFolleto = 'parcial';
+        _mostrando = 'folleto';
       }
     }
   }
