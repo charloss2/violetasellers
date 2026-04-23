@@ -194,6 +194,44 @@
 
     /* Sin PDF */
     .folleto-sinpdf { padding: 20px; text-align: center; color: rgba(255,255,255,.7); font-size: 13px; }
+    /* Botón toggle folleto — integrado en el header */
+    .btn-toggle-folleto {
+      background: rgba(255,255,255,.15);
+      color: white;
+      border: 1.5px solid rgba(255,255,255,.35);
+      border-radius: 10px;
+      padding: 7px 11px;
+      font-size: 18px;
+      font-family: inherit;
+      cursor: pointer;
+      display: none; /* solo en mobile */
+      align-items: center;
+      line-height: 1;
+      transition: background .15s;
+    }
+    .btn-toggle-folleto:active { background: rgba(255,255,255,.28); }
+    @media (max-width: 767px) {
+      .btn-toggle-folleto { display: flex; }
+      /* En mobile el split-layout es columna */
+      .split-layout {
+        flex-direction: column !important;
+        height: auto !important;
+      }
+      .folleto-panel.oculto { display: none !important; }
+      .folleto-panel:not(.oculto) {
+        height: 47vh !important;
+        flex: none !important;
+      }
+      .productos-panel {
+        flex: 1 !important;
+        height: auto !important;
+        min-height: 50vh;
+      }
+      /* Espacio para el botón finalizar fixed */
+      .productos-lista { padding-bottom: 80px !important; }
+      /* Mini nav de páginas — visible solo cuando folleto está oculto */
+      .mini-nav-paginas { display: flex; }
+    }
 
     /* ── MITAD INFERIOR: productos scrolleables ── */
     .productos-panel {
@@ -286,6 +324,30 @@
     .sin-productos p { font-size: 13px; line-height: 1.6; }
 
     /* ── BARRA FINALIZAR ── */
+    /* Mini nav de páginas — solo mobile, solo cuando folleto oculto */
+    .mini-nav-paginas {
+      display: none; /* oculto por defecto y en desktop */
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: white;
+      border-bottom: 1px solid var(--border);
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .mini-nav-paginas.visible { display: flex; }
+    .mini-nav-btn {
+      background: var(--violet); color: white; border: none;
+      border-radius: 10px; padding: 8px 18px; font-size: 18px;
+      font-weight: 700; cursor: pointer; font-family: inherit;
+      flex-shrink: 0;
+    }
+    .mini-nav-btn:disabled { opacity: .3; cursor: default; }
+    .mini-nav-label {
+      font-size: 13px; font-weight: 700; color: var(--violet);
+      text-align: center; flex: 1;
+    }
+
     .finalizar-bar {
       position: fixed; bottom: 0; left: 0; right: 0;
       background: white; border-top: 1px solid var(--border);
@@ -397,6 +459,10 @@
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;">
+      <button class="btn-toggle-folleto" id="btn-toggle-folleto"
+        onclick="toggleFolleto()" title="Mostrar/ocultar folleto">
+        📖
+      </button>
       <button class="carrito-btn" onclick="abrirModal()">
         🛒 <span class="carrito-count" id="carrito-count">0</span>
       </button>
@@ -423,7 +489,7 @@
   <div class="split-layout">
 
     <!-- ── MITAD SUPERIOR: folleto ── -->
-    <div class="folleto-panel">
+    <div class="folleto-panel" id="folleto-panel">
       <div class="folleto-topbar">
         <span class="folleto-campana" id="camp-label">Campaña —</span>
         <span class="folleto-pagina-label" id="pag-label">— / —</span>
@@ -458,7 +524,16 @@
     </div>
 
     <!-- ── MITAD INFERIOR/DERECHA: productos scrolleables ── -->
-    <div class="productos-panel">
+    <div class="productos-panel" id="productos-panel">
+      <!-- Mini nav de páginas — solo mobile, visible cuando folleto está oculto -->
+      <div class="mini-nav-paginas" id="mini-nav-paginas">
+        <button class="mini-nav-btn" id="mini-btn-prev"
+          onclick="cambiarPagina(-1)" disabled>←</button>
+        <span class="mini-nav-label" id="mini-pag-label">Página — / —</span>
+        <button class="mini-nav-btn" id="mini-btn-next"
+          onclick="cambiarPagina(1)">→</button>
+      </div>
+
       <div class="productos-header">
         <span class="productos-titulo" id="prods-titulo">Productos</span>
         <span class="productos-count-label" id="prods-count"></span>
@@ -557,9 +632,12 @@
   const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhbmd3anhlZWJiemJxZWp5enNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxODc2NDgsImV4cCI6MjA5MTc2MzY0OH0.IjFNt8t1-YU4aUOgB-y8UFGAgHqL8qFNOwCIyxCvFj8';
 
   // Parámetros URL: ?v=username&c=6
+  // Acepta cualquier formato: c=6, c=Campaña 6, c=6/26, c=06/26
   const urlParams      = new URLSearchParams(window.location.search);
   const vendedoraParam = urlParams.get('v') || null;
-  const campanaParam   = urlParams.get('c') || null;
+  const _campRaw       = urlParams.get('c') || null;
+  // Extrae solo el primer número del parámetro c
+  const campanaParam   = _campRaw ? (String(_campRaw).match(/\d+/)?.[0] || null) : null;
 
   // Estado global
   let currentCliente      = null;
@@ -575,6 +653,63 @@
   function H(){ return {'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}; }
   async function sGet(t,q=''){const r=await fetch(`${SUPA_URL}/rest/v1/${t}?${q}`,{headers:H()});if(!r.ok)throw new Error(await r.text());return r.json();}
   async function sPost(t,d){const r=await fetch(`${SUPA_URL}/rest/v1/${t}`,{method:'POST',headers:{...H(),'Prefer':'return=representation'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return r.json();}
+
+  // ── TOGGLE FOLLETO (mobile) ───────────────────────────────
+  let _mostrando = 'productos';
+  function toggleFolleto(){
+    const fp   = document.getElementById('folleto-panel');
+    const btn  = document.getElementById('btn-toggle-folleto');
+    const mnav = document.getElementById('mini-nav-paginas');
+    if(!fp || !btn) return;
+    if(_mostrando === 'productos'){
+      // Mostrar folleto — ocultar mini nav
+      fp.classList.remove('oculto');
+      btn.textContent = '🛍️';
+      btn.title = 'Ver productos';
+      if(mnav) mnav.classList.remove('visible');
+      _mostrando = 'folleto';
+      if(pdfDoc && paginaActual) renderPagina(paginaActual);
+    } else {
+      // Ocultar folleto — mostrar mini nav
+      fp.classList.add('oculto');
+      btn.textContent = '📖';
+      btn.title = 'Ver folleto';
+      if(mnav) mnav.classList.add('visible');
+      _mostrando = 'productos';
+      sincronizarMiniNav();
+    }
+  }
+  function sincronizarMiniNav(){
+    // Sincronizar el mini nav con el estado del folleto principal
+    const mp = document.getElementById('mini-pag-label');
+    const mb = document.getElementById('mini-btn-prev');
+    const mb2= document.getElementById('mini-btn-next');
+    if(!mp) return;
+    if(totalPaginas > 0 && paginaActual){
+      mp.textContent = 'Página ' + paginaActual + ' / ' + totalPaginas;
+      if(mb)  mb.disabled  = paginaActual <= 1;
+      if(mb2) mb2.disabled = paginaActual >= totalPaginas;
+    } else {
+      mp.textContent = 'Sin folleto cargado';
+      if(mb)  mb.disabled  = true;
+      if(mb2) mb2.disabled = true;
+    }
+  }
+  function initToggleMobile(){
+    if(window.innerWidth < 768){
+      const fp  = document.getElementById('folleto-panel');
+      const btn = document.getElementById('btn-toggle-folleto');
+      const mnav= document.getElementById('mini-nav-paginas');
+      if(fp && btn){
+        fp.classList.add('oculto');
+        btn.textContent = '📖';
+        btn.title = 'Ver folleto';
+        // Arrancar con mini nav visible (folleto oculto)
+        if(mnav) mnav.classList.add('visible');
+        _mostrando = 'productos';
+      }
+    }
+  }
 
   function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2800); }
   function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById('scr-'+id).classList.add('active'); }
@@ -663,30 +798,49 @@
   }
 
   async function cargarCatalogo(numCamp){
-    const variantes = [
-      'campana=eq.' + encodeURIComponent('Campaña ' + numCamp + '/26'),
-      'campana=eq.' + encodeURIComponent(numCamp.padStart(2,'0') + '/26'),
-      'campana=eq.' + encodeURIComponent(numCamp + '/26'),
-    ];
     try{
       let prods = [];
-      for(const q of variantes){
-        // select=* explícito + limit alto para traer todos
-        prods = await sGet('productos', q + '&select=*&limit=1000&order=nombre.asc');
-        if(prods.length) break;
+
+      if(numCamp){
+        // Intentar variantes del formato de campaña en la BD
+        const variantes = [
+          'campana=eq.' + encodeURIComponent('Campaña ' + numCamp + '/26'),
+          'campana=eq.' + encodeURIComponent(numCamp + '/26'),
+          'campana=eq.' + encodeURIComponent(numCamp.toString().padStart(2,'0') + '/26'),
+          'campana=eq.' + encodeURIComponent(numCamp),
+        ];
+        for(const q of variantes){
+          prods = await sGet('productos', q + '&select=*&limit=1000&order=nombre.asc');
+          if(prods.length){ console.log('✅ match con:', q); break; }
+        }
       }
+
+      // Si ninguna variante matcheó, traer todos y tomar la campaña más reciente
+      if(!prods.length){
+        console.warn('⚠️ Ninguna variante matcheó — cargando todos los productos');
+        const todos = await sGet('productos', 'select=*&limit=2000&order=campana.desc,nombre.asc');
+        if(todos.length){
+          // Detectar la campaña más reciente disponible
+          const camps = [...new Set(todos.map(p=>p.campana).filter(Boolean))].sort().reverse();
+          const campActual = camps[0] || '';
+          console.log('Campañas disponibles:', camps, '→ usando:', campActual);
+          // Filtrar por la más reciente (o mostrar todos si no hay campaña)
+          prods = campActual ? todos.filter(p => p.campana === campActual) : todos;
+          toast(`ℹ️ Mostrando campaña: ${campActual || 'todas'}`);
+        }
+      }
+
       allProductosCli = prods;
-      document.getElementById('camp-label').textContent = 'Campaña ' + numCamp + '/26';
-
-      // Debug visible en pantalla
       const conPag = prods.filter(p => p.pagina).length;
-      console.log(`✅ Catálogo: ${prods.length} productos, ${conPag} con página`);
-      if(prods.length > 0){
-        console.log('Ejemplo producto[0]:', JSON.stringify(prods[0]));
+      document.getElementById('camp-label').textContent = 'Campaña ' + numCamp + '/26';
+      toast(`📦 ${prods.length} productos cargados`);
+      console.log(`Catálogo: ${prods.length} prods, ${conPag} con página`);
+      // Si ningún producto tiene página asignada, mostrar todos de entrada
+      // para que no quede vacío cuando el folleto renderiza página 1
+      if(prods.length > 0 && conPag === 0){
+        console.warn('Ningún producto tiene página asignada — mostrando todos');
+        renderProductosDePagina(null);
       }
-
-      // Mostrar debug en pantalla por 5 segundos
-      toast(`📦 ${prods.length} productos · ${conPag} con página`);
 
     }catch(e){
       console.error('Error catálogo:', e);
@@ -696,8 +850,17 @@
 
   // ── FOLLETO PDF ────────────────────────────────────────────
   // El PDF se sirve desde GitHub junto a los HTML
-  // Nombre esperado: folleto_c626.pdf (ajustar si cambia la campaña)
-  const PDF_URL = './folleto_c626.pdf';
+  // PDF del folleto — se carga según la campaña del parámetro ?c=
+  // El año se configura desde el admin en la sección Folletos (guardado en localStorage)
+  // Convención: folleto_c626.pdf, folleto_c726.pdf, folleto_c827.pdf, etc.
+  function getPdfUrl(campNum){
+    if(!campNum) return './folleto_c626.pdf';
+    // NO usar padStart — el nombre del archivo es folleto_c626.pdf no folleto_c0626.pdf
+    const num = String(campNum).replace(/^0+/, ''); // quita ceros a la izquierda: "06" → "6"
+    const año = localStorage.getItem('mca_año') || '26';
+    return `./folleto_c${num}${año}.pdf`;
+  }
+  const PDF_URL = getPdfUrl(campanaParam || '6');
 
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -727,6 +890,8 @@
     document.getElementById('pag-label').textContent = `${num} / ${totalPaginas}`;
     document.getElementById('btn-prev').disabled = num <= 1;
     document.getElementById('btn-next').disabled = num >= totalPaginas;
+    // Sincronizar mini nav (mobile)
+    sincronizarMiniNav();
     document.querySelectorAll('.folleto-dot').forEach((d,i) => d.classList.toggle('active', i+1===num));
 
     const page    = await pdfDoc.getPage(num);
@@ -980,13 +1145,16 @@
       lista.innerHTML = `
         <div class="sin-productos">
           <div class="sin-productos-emoji">🔍</div>
-          <p>No hay productos asignados<br>a esta página del folleto.</p>
-          ${totalCat > 0 ? `<button onclick="renderProductosDePagina(null)"
-            style="margin-top:12px;background:var(--violet);color:white;border:none;
-            border-radius:10px;padding:10px 20px;font-size:13px;font-weight:700;
-            cursor:pointer;font-family:inherit;">
-            Ver todos los productos (${totalCat})
-          </button>` : '<p style="color:#ef4444;font-size:12px;">Sin catálogo cargado</p>'}
+          <p style="font-size:13px;color:#6b7280;">Página ${numPag} — sin productos asignados</p>
+          ${totalCat > 0
+            ? `<button onclick="renderProductosDePagina(null)"
+                style="margin-top:14px;background:linear-gradient(135deg,var(--violet),var(--pink));
+                color:white;border:none;border-radius:12px;padding:12px 24px;
+                font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;width:100%;">
+                🛍️ Ver todos los productos (${totalCat})
+              </button>`
+            : '<p style="color:#ef4444;font-size:12px;margin-top:8px;">Sin catálogo — verificá el link</p>'
+          }
         </div>`;
       return;
     }
@@ -1347,6 +1515,8 @@
   // Siempre pedir DNI al cargar — no conservar sesión entre recargas
   // (el localStorage se usa solo para guardar datos durante la sesión actual)
   localStorage.removeItem('micatalog_cliente_v2');
+
+  initToggleMobile();
 
   document.addEventListener('keypress', e => {
     if(e.key === 'Enter' && document.getElementById('scr-login').classList.contains('active')) loginDNI();
