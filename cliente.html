@@ -1295,17 +1295,65 @@
 
   function renderResumen(){
     const items = Object.values(carrito);
+    if(!items.length){
+      cerrarModal(); return;
+    }
     const totalItems = items.reduce((s,p) => s + p.qty, 0);
-    let html = items.map(p =>
-      `<div class="resumen-item">
-        <span>${p.qty}x ${p.nombre.substring(0,38)}${p.nombre.length>38?'...':''}</span>
-        <span style="font-weight:600;color:#6b7280;">×${p.qty}</span>
+    let html = `<div style="font-size:12px;font-weight:700;color:#7c3aed;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;">
+      Revisá tu pedido (${totalItems} unidad${totalItems!==1?'es':''})</div>`;
+    html += items.map(p => `
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f3f0ff;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;color:#1e0a3c;line-height:1.3;">
+            ${p.nombre.substring(0,42)}${p.nombre.length>42?'…':''}
+          </div>
+          <div style="font-size:11px;color:#9ca3af;">Cód: ${p.codigo}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          <button onclick="carritoQtyModal('${p.codigo}',-1)"
+            style="width:30px;height:30px;border-radius:8px;border:none;background:#fee2e2;
+            color:#dc2626;font-size:18px;font-weight:700;cursor:pointer;
+            display:flex;align-items:center;justify-content:center;font-family:inherit;line-height:1;">−</button>
+          <span style="font-size:16px;font-weight:800;min-width:22px;text-align:center;color:#1e0a3c;">${p.qty}</span>
+          <button onclick="carritoQtyModal('${p.codigo}',1)"
+            style="width:30px;height:30px;border-radius:8px;border:none;background:#ede9fe;
+            color:#7c3aed;font-size:18px;font-weight:700;cursor:pointer;
+            display:flex;align-items:center;justify-content:center;font-family:inherit;line-height:1;">+</button>
+          <button onclick="carritoQtyModal('${p.codigo}',0)"
+            style="width:26px;height:26px;border-radius:6px;border:none;background:#f3f4f6;
+            color:#9ca3af;font-size:13px;cursor:pointer;font-family:inherit;"
+            title="Quitar">✕</button>
+        </div>
       </div>`
     ).join('');
     html += `<div style="margin-top:10px;padding:8px 10px;background:#FEF3C7;border-radius:8px;font-size:12px;color:#92400E;line-height:1.5;">
       💜 <strong>Tu vendedora confirma el precio total</strong> con todos los descuentos y ofertas aplicados antes de que hagas el pago.
     </div>`;
     document.getElementById('modal-resumen').innerHTML = html;
+    // Actualizar el label del botón confirmar
+    const btnConf = document.getElementById('btn-confirmar');
+    if(btnConf) btnConf.textContent = `💜 Enviar pedido (${totalItems} unidad${totalItems!==1?'es':''})`;
+  }
+
+  function carritoQtyModal(codigo, delta){
+    if(delta === 0){
+      // Quitar producto
+      delete carrito[codigo];
+    } else {
+      if(!carrito[codigo]) return;
+      carrito[codigo].qty += delta;
+      if(carrito[codigo].qty <= 0) delete carrito[codigo];
+    }
+    // Actualizar la tarjeta en la lista de productos si está visible
+    actualizarUI(codigo);
+    // Si el carrito quedó vacío, cerrar modal
+    if(Object.keys(carrito).length === 0){
+      cerrarModal();
+      toast('Carrito vacío');
+      return;
+    }
+    // Re-renderizar el resumen
+    renderResumen();
   }
 
   // ── CONFIRMAR PEDIDO ───────────────────────────────────────
