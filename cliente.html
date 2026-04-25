@@ -1346,10 +1346,20 @@
     }
     // Actualizar la tarjeta en la lista de productos si está visible
     actualizarUI(codigo);
-    // Si el carrito quedó vacío, cerrar modal
+    // Si el carrito quedó vacío, mostrar mensaje en vez de cerrar
     if(Object.keys(carrito).length === 0){
-      cerrarModal();
-      toast('Carrito vacío');
+      document.getElementById('modal-resumen').innerHTML = `
+        <div style="text-align:center;padding:24px 16px;">
+          <div style="font-size:40px;margin-bottom:12px;">🛒</div>
+          <div style="font-size:15px;font-weight:700;color:#7c3aed;margin-bottom:6px;">
+            Aún no hay productos en tu carrito
+          </div>
+          <div style="font-size:13px;color:#9ca3af;line-height:1.5;">
+            Cerrá esta ventana y elegí los productos que querés pedir
+          </div>
+        </div>`;
+      const btnConf = document.getElementById('btn-confirmar');
+      if(btnConf){ btnConf.disabled = true; btnConf.textContent = '💜 Enviar pedido'; }
       return;
     }
     // Re-renderizar el resumen
