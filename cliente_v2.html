@@ -1697,14 +1697,23 @@
 
   async function cargarHotspots(campNum){
     try{
-      const camp = 'Campaña '+campNum+'/26';
-      // Probar variantes del formato de campaña
-      let hs = await sGet('folleto_hotspots',
-        `campana=eq.${encodeURIComponent(campNum+'/26')}&select=*`);
-      if(!hs.length) hs = await sGet('folleto_hotspots',
-        `campana=eq.${encodeURIComponent('Campaña '+campNum+'/26')}&select=*`);
-      _hotspots = hs;
-      console.log(`✅ ${hs.length} hotspots cargados para campaña ${campNum}`);
+      // Traer todos los hotspots y filtrar client-side por número de campaña
+      // Para evitar problemas con el formato exacto del campo campana en la BD
+      const todos = await sGet('folleto_hotspots', 'select=*&limit=2000');
+      console.log(`Hotspots en BD: ${todos.length} total`);
+      if(todos.length) console.log('Ejemplo campana:', todos[0].campana);
+
+      // Extraer solo el número de campaña para comparar
+      const numBuscado = String(campNum).replace(/[^0-9]/g,'').replace(/^0+/,'');
+      _hotspots = todos.filter(hs => {
+        const numHS = String(hs.campana||'').replace(/[^0-9]/g,'').replace(/^0+/,'');
+        return numHS.startsWith(numBuscado) || numBuscado.startsWith(numHS);
+      });
+      console.log(`✅ ${_hotspots.length} hotspots para campaña ${campNum} (buscando número "${numBuscado}")`);
+      if(_hotspots.length){
+        const pags = [...new Set(_hotspots.map(h=>h.pagina))].sort((a,b)=>a-b);
+        console.log('Páginas con hotspots:', pags);
+      }
     }catch(e){ console.warn('No se pudieron cargar hotspots:', e.message); _hotspots=[]; }
   }
 
