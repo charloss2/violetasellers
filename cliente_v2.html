@@ -1708,16 +1708,26 @@
 
   function renderHotspots(pagina){
     const overlay = document.getElementById('hotspots-overlay');
-    const canvas  = document.getElementById('folleto-canvas');
-    if(!overlay || !canvas) return;
+    if(!overlay) return;
     const pagHs = _hotspots.filter(hs => Number(hs.pagina) === Number(pagina));
     overlay.innerHTML = pagHs.map(hs => {
-      const enCarrito = carrito[hs.codigo];
-      return `<button class="hs-btn ${enCarrito?'en-carrito':''}"
-        style="left:${hs.pos_x}%;top:${hs.pos_y}%;"
+      // Detectar si es un grupo
+      const esGrupo = hs.codigo === 'GRUPO';
+      let grupo = [];
+      if(esGrupo){ try{ grupo = JSON.parse(hs.nombre||'[]'); }catch(e){} }
+      // ¿Algún producto del grupo está en el carrito?
+      const enCarrito = esGrupo
+        ? grupo.some(g=>carrito[g.codigo])
+        : !!carrito[hs.codigo];
+      const icon = esGrupo ? '🎨' : (enCarrito ? '✅' : '+');
+      const titulo = esGrupo
+        ? `Grupo: ${grupo.map(g=>g.nombre).join(', ').substring(0,60)}`
+        : `${hs.codigo} — ${hs.nombre||''}`;
+      return `<button class="hs-btn"
+        style="left:${hs.pos_x}%;top:${hs.pos_y}%;${enCarrito?'background:linear-gradient(135deg,#059669,#10b981);':''}"
         onclick="abrirHsPopup(event,'${hs.codigo}','${encodeURIComponent(hs.nombre||'')}')"
-        title="${hs.codigo} — ${hs.nombre||''}">
-        ${enCarrito ? '✅' : '+'}
+        title="${titulo}">
+        ${icon}
       </button>`;
     }).join('');
   }
@@ -1726,37 +1736,100 @@
 
   function abrirHsPopup(e, codigo, nombreEnc){
     e.stopPropagation();
-    const nombre = decodeURIComponent(nombreEnc);
-    _hsPopupCodigo = codigo;
-    _hsPopupQty = carrito[codigo]?.qty || 1;
-
-    // Quitar popup anterior
     document.getElementById('hs-popup')?.remove();
     document.getElementById('hs-backdrop')?.remove();
 
-    // Backdrop
     const bd = document.createElement('div');
     bd.id='hs-backdrop'; bd.className='hs-backdrop';
     bd.onclick = cerrarHsPopup;
     document.body.appendChild(bd);
 
-    // Popup
     const pop = document.createElement('div');
     pop.id='hs-popup'; pop.className='hs-popup';
-    pop.innerHTML = `
-      <div class="hs-popup-nombre">${nombre}</div>
-      <div class="hs-popup-codigo">Código: ${codigo}</div>
-      <div class="hs-qty-row">
-        <button class="hs-qty-btn menos" onclick="hsQtyChange(-1)">−</button>
-        <span class="hs-qty-num" id="hs-qty-num">${_hsPopupQty}</span>
-        <button class="hs-qty-btn mas"  onclick="hsQtyChange(1)">+</button>
-      </div>
-      <button class="hs-agregar-btn" onclick="hsAgregarAlCarrito()">
-        🛒 Agregar al pedido
-      </button>
-      <button class="hs-cancelar" onclick="cerrarHsPopup()">Cancelar</button>
-    `;
+
+    // ¿Es un grupo?
+    if(codigo === 'GRUPO'){
+      let grupo = [];
+      try{ grupo = JSON.parse(decodeURIComponent(nombreEnc)); }catch(e){}
+      pop.innerHTML = `
+        <div class="hs-popup-nombre">💜 Elegí tu producto</div>
+        <div class="hs-popup-codigo">${grupo.length} opciones disponibles</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;max-height:220px;overflow-y:auto;">
+          ${grupo.map(g=>{
+            const enC = carrito[g.codigo];
+            return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;
+              border:1.5px solid ${enC?'#059669':'#e9d5ff'};border-radius:12px;
+              background:${enC?'#ECFDF5':'white'};">
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;font-weight:700;color:#1e0a3c;line-height:1.3;">${g.nombre}</div>
+                <div style="font-size:11px;color:#9ca3af;">Cód: ${g.codigo}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+                ${enC
+                  ? `<button onclick="hsGrupoQty('${g.codigo}',-1)"
+                      style="width:30px;height:30px;border-radius:8px;border:none;
+                      background:#fee2e2;color:#dc2626;font-size:18px;font-weight:700;cursor:pointer;">−</button>
+                    <span style="font-size:15px;font-weight:800;min-width:20px;text-align:center;">${enC.qty}</span>
+                    <button onclick="hsGrupoQty('${g.codigo}',1)"
+                      style="width:30px;height:30px;border-radius:8px;border:none;
+                      background:#ede9fe;color:#7c3aed;font-size:18px;font-weight:700;cursor:pointer;">+</button>`
+                  : `<button onclick="hsGrupoAgregar('${g.codigo}','${encodeURIComponent(g.nombre)}')"
+                      style="background:linear-gradient(135deg,#7c3aed,#ec4899);color:white;
+                      border:none;border-radius:10px;padding:8px 14px;font-size:13px;
+                      font-weight:700;cursor:pointer;font-family:inherit;">+ Agregar</button>`
+                }
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+        <button class="hs-cancelar" onclick="cerrarHsPopup()">Cerrar</button>
+      `;
+    } else {
+      // Producto individual
+      const nombre = decodeURIComponent(nombreEnc);
+      _hsPopupCodigo = codigo;
+      _hsPopupQty = carrito[codigo]?.qty || 1;
+      pop.innerHTML = `
+        <div class="hs-popup-nombre">${nombre}</div>
+        <div class="hs-popup-codigo">Código: ${codigo}</div>
+        <div class="hs-qty-row">
+          <button class="hs-qty-btn menos" onclick="hsQtyChange(-1)">−</button>
+          <span class="hs-qty-num" id="hs-qty-num">${_hsPopupQty}</span>
+          <button class="hs-qty-btn mas" onclick="hsQtyChange(1)">+</button>
+        </div>
+        <button class="hs-agregar-btn" onclick="hsAgregarAlCarrito()">
+          🛒 Agregar al pedido
+        </button>
+        <button class="hs-cancelar" onclick="cerrarHsPopup()">Cancelar</button>
+      `;
+    }
     document.body.appendChild(pop);
+  }
+
+  function hsGrupoAgregar(codigo, nombreEnc){
+    const nombre = decodeURIComponent(nombreEnc);
+    const prod = allProductosCli.find(p=>p.codigo===codigo);
+    if(prod){
+      carrito[codigo] = {...prod, qty:1};
+    } else {
+      // Si no está en catálogo, crear entrada mínima
+      carrito[codigo] = {codigo, nombre, qty:1};
+    }
+    actualizarUI(codigo);
+    renderHotspots(paginaActual);
+    toast(`✅ ${nombre.substring(0,30)} agregado`);
+    cerrarHsPopup();
+  }
+
+  function hsGrupoQty(codigo, delta){
+    if(!carrito[codigo]) return;
+    carrito[codigo].qty += delta;
+    if(carrito[codigo].qty <= 0) delete carrito[codigo];
+    actualizarUI(codigo);
+    renderHotspots(paginaActual);
+    // Re-abrir el popup para reflejar el cambio
+    const hs = _hotspots.find(h=>h.codigo==='GRUPO' && h.pagina===paginaActual);
+    if(hs) abrirHsPopup({stopPropagation:()=>{}}, 'GRUPO', encodeURIComponent(hs.nombre));
   }
 
   function hsQtyChange(delta){

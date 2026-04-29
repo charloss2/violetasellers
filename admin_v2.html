@@ -1390,42 +1390,146 @@ function copiarSQL(){navigator.clipboard.writeText(document.getElementById('sqlC
 
   function hsBuscarProducto(q){
     if(!q.trim()){ document.getElementById('hs-resultados').innerHTML=''; return; }
-    const hits = allProds.filter(p=>
-      (!_hsCampana||p.campana===_hsCampana||!p.campana)&&
-      (p.nombre.toLowerCase().includes(q.toLowerCase())||String(p.codigo).includes(q))
-    ).slice(0,12);
-    document.getElementById('hs-resultados').innerHTML = hits.map(p=>`
-      <div onclick="hsSeleccionar('${p.codigo}','${encodeURIComponent(p.nombre)}')"
-        style="padding:8px 12px;border:1.5px solid #e9d5ff;border-radius:8px;cursor:pointer;
+    const qL = q.toLowerCase().trim();
+    // Filtrar por campaña con múltiples variantes del formato
+    const campNum = _hsCampana ? _hsCampana.replace(/[^0-9]/g,'').replace(/^0/,'') : '';
+    const hits = allProds.filter(p=>{
+      // Filtro de campaña flexible
+      if(campNum){
+        const pCampNum = (p.campana||'').replace(/[^0-9]/g,'').replace(/^0/,'');
+        if(pCampNum && !pCampNum.startsWith(campNum) && !campNum.startsWith(pCampNum)) return false;
+      }
+      // Búsqueda por nombre o código
+      return p.nombre.toLowerCase().includes(qL) || String(p.codigo||'').includes(qL);
+    }).slice(0,15);
+
+    const div = document.getElementById('hs-resultados');
+    if(!hits.length){
+      div.innerHTML='<div style="padding:12px;color:#9ca3af;font-size:13px;">Sin resultados para "'+q+'"</div>';
+      return;
+    }
+    div.innerHTML = hits.map(p=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;
+        border:1.5px solid #e9d5ff;border-radius:8px;cursor:pointer;
         font-size:13px;background:white;transition:background .15s;"
         onmouseover="this.style.background='#f5f0ff'" onmouseout="this.style.background='white'">
-        <strong style="color:#7c3aed;">${p.codigo}</strong> — ${p.nombre}
-      </div>`).join('')||'<div style="padding:12px;color:#9ca3af;font-size:13px;">Sin resultados</div>';
+        <div style="flex:1;" onclick="hsSeleccionar('${p.codigo}','${encodeURIComponent(p.nombre)}')">
+          <strong style="color:#7c3aed;">${p.codigo}</strong> — ${p.nombre}
+        </div>
+        <button onclick="hsAgregarAlGrupo('${p.codigo}','${encodeURIComponent(p.nombre)}')"
+          style="background:#ede9fe;color:#7c3aed;border:none;border-radius:6px;
+          padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;
+          font-family:inherit;">
+          + Grupo
+        </button>
+      </div>`).join('');
   }
 
+  // Producto individual seleccionado
   function hsSeleccionar(codigo,nombreEnc){
     _hsSelCodigo=codigo; _hsSelNombre=decodeURIComponent(nombreEnc);
+    _hsGrupo=[]; // limpiar grupo si había uno
     document.getElementById('hs-sel-texto').textContent=`${codigo} — ${_hsSelNombre}`;
     document.getElementById('hs-seleccionado').style.display='block';
     document.getElementById('hs-confirmar').disabled=false;
     document.getElementById('hs-resultados').innerHTML='';
     document.getElementById('hs-buscar').value='';
+    hsRenderGrupo();
+  }
+
+  // ── GRUPOS: múltiples productos en un hotspot ─────────────
+  let _hsGrupo = []; // [{codigo, nombre}, ...]
+
+  function hsAgregarAlGrupo(codigo, nombreEnc){
+    const nombre = decodeURIComponent(nombreEnc);
+    if(_hsGrupo.find(g=>g.codigo===codigo)){ toast('Ya está en el grupo'); return; }
+    _hsGrupo.push({codigo, nombre});
+    // Si había un producto individual, limpiarlo
+    _hsSelCodigo = ''; _hsSelNombre = '';
+    document.getElementById('hs-seleccionado').style.display='none';
+    document.getElementById('hs-buscar').value='';
+    document.getElementById('hs-resultados').innerHTML='';
+    document.getElementById('hs-confirmar').disabled = _hsGrupo.length===0;
+    hsRenderGrupo();
+  }
+
+  function hsQuitarDelGrupo(codigo){
+    _hsGrupo = _hsGrupo.filter(g=>g.codigo!==codigo);
+    document.getElementById('hs-confirmar').disabled = _hsGrupo.length===0 && !_hsSelCodigo;
+    hsRenderGrupo();
+  }
+
+  function hsRenderGrupo(){
+    // Mostrar el grupo acumulado debajo del buscador
+    let existing = document.getElementById('hs-grupo-preview');
+    if(!_hsGrupo.length){ if(existing) existing.remove(); return; }
+    if(!existing){
+      existing = document.createElement('div');
+      existing.id='hs-grupo-preview';
+      // Insertar antes del botón confirmar
+      const confirmar = document.getElementById('hs-confirmar').parentElement;
+      confirmar.parentElement.insertBefore(existing, confirmar);
+    }
+    existing.innerHTML = `
+      <div style="background:#f5f0ff;border:2px solid #e9d5ff;border-radius:10px;padding:10px 12px;margin-bottom:12px;">
+        <div style="font-size:12px;font-weight:700;color:#7c3aed;margin-bottom:8px;">
+          🎯 Grupo de ${_hsGrupo.length} producto${_hsGrupo.length!==1?'s':''} en este hotspot:
+        </div>
+        ${_hsGrupo.map(g=>`
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:12px;">
+            <strong style="color:#7c3aed;">${g.codigo}</strong>
+            <span style="flex:1;color:#374151;">${g.nombre.substring(0,35)}</span>
+            <button onclick="hsQuitarDelGrupo('${g.codigo}')"
+              style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:14px;padding:0;">✕</button>
+          </div>`).join('')}
+        <div style="font-size:11px;color:#9ca3af;margin-top:6px;">
+          La clienta verá un selector para elegir cuál quiere
+        </div>
+      </div>`;
+    document.getElementById('hs-confirmar').disabled = false;
   }
 
   async function hsConfirmarHotspot(){
-    if(!_hsSelCodigo){ toast('⚠️ Seleccioná un producto','err'); return; }
-    const nuevo={campana:_hsCampana,pagina:_hsPagina,
-      pos_x:Math.round(_hsPendingX*100)/100,pos_y:Math.round(_hsPendingY*100)/100,
-      codigo:_hsSelCodigo,nombre:_hsSelNombre};
+    if(!_hsSelCodigo && !_hsGrupo.length){ toast('⚠️ Seleccioná al menos un producto','err'); return; }
+
+    // Si hay grupo → guardar como JSON en el campo nombre / código especial
+    let nuevo;
+    if(_hsGrupo.length > 0){
+      // Grupo: codigo=GRUPO, nombre=JSON de los productos
+      nuevo = {
+        campana: _hsCampana,
+        pagina:  _hsPagina,
+        pos_x:   Math.round(_hsPendingX*100)/100,
+        pos_y:   Math.round(_hsPendingY*100)/100,
+        codigo:  'GRUPO',
+        nombre:  JSON.stringify(_hsGrupo), // [{codigo, nombre}, ...]
+      };
+    } else {
+      nuevo = {
+        campana: _hsCampana,
+        pagina:  _hsPagina,
+        pos_x:   Math.round(_hsPendingX*100)/100,
+        pos_y:   Math.round(_hsPendingY*100)/100,
+        codigo:  _hsSelCodigo,
+        nombre:  _hsSelNombre,
+      };
+    }
     try{
       const res = await sPost('folleto_hotspots',nuevo);
       _hsHotspots.push(res[0]||{...nuevo,id:'tmp'+Date.now()});
       hsRenderDots(); hsCancelarModal();
-      toast(`✅ ${_hsSelCodigo} guardado en página ${_hsPagina}`);
+      const label = _hsGrupo.length>0
+        ? `Grupo de ${_hsGrupo.length} productos`
+        : _hsSelCodigo;
+      toast(`✅ ${label} guardado en página ${_hsPagina}`);
     }catch(e){ toast('❌ '+e.message,'err'); }
   }
 
-  function hsCancelarModal(){ document.getElementById('hs-modal').style.display='none'; }
+  function hsCancelarModal(){
+    document.getElementById('hs-modal').style.display='none';
+    _hsGrupo=[];
+    document.getElementById('hs-grupo-preview')?.remove();
+  }
 
   async function cargarHotspotsExistentes(){
     const camp = (document.getElementById('hs-campana')?.value||'').trim()||_hsCampana;
