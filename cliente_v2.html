@@ -582,10 +582,13 @@
 
       <!-- Canvas scrolleable con pinch zoom nativo -->
       <div class="folleto-canvas-scroll" id="folleto-scroll">
-        <div id="folleto-inner" style="display:flex;justify-content:center;align-items:flex-start;padding:8px 0;position:relative;">
-          <canvas id="folleto-canvas"></canvas>
-          <!-- Hotspots overlay — posicionados sobre el canvas -->
-          <div id="hotspots-overlay" style="position:absolute;inset:0;pointer-events:none;"></div>
+        <div id="folleto-inner" style="display:flex;justify-content:center;align-items:flex-start;padding:8px 0;">
+          <!-- Wrapper relativo al canvas para posicionar hotspots exactamente -->
+          <div id="folleto-canvas-wrap" style="position:relative;display:inline-block;line-height:0;">
+            <canvas id="folleto-canvas"></canvas>
+            <!-- Hotspots overlay — mismo tamaño que el canvas -->
+            <div id="hotspots-overlay" style="position:absolute;inset:0;pointer-events:none;"></div>
+          </div>
         </div>
         <div class="folleto-loading" id="folleto-loading">
           <div class="spinner"></div>
@@ -1042,6 +1045,7 @@
 
     await page.render({canvasContext: ctx, viewport}).promise;
     renderProductosDePagina(num);
+    renderHotspots(num);
   }
 
   function ajustarZoom(delta){
