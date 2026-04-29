@@ -1,6 +1,6 @@
 <!--
 ================================================================================
-  Violetta Seller — Sistema de gestión de pedidos para vendedoras directas
+  MiCatalogApp — Sistema de gestión de pedidos para vendedoras directas
   © 2026 Carlos Caceres. Todos los derechos reservados.
   Proyecto Alpha v1.0.0
   Queda prohibida la reproducción total o parcial sin autorización expresa.
@@ -11,7 +11,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Violetta Seller — Admin</title>
+  <title>MiCatalogApp — Admin</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   <style>
     :root{--bg:#0e0a14;--surface:#1a1425;--surface2:#231a33;--border:#2e2040;--accent:#c084fc;--accent2:#818cf8;--accent3:#f472b6;--gold:#fbbf24;--text:#f0e8ff;--text2:#9b86c8;--text3:#5e4d7a;--danger:#f87171;--success:#4ade80;--warning:#fb923c;}
@@ -142,7 +142,7 @@
 <div class="login-wrap" id="loginWrap">
   <div class="login-box">
     <div class="login-badge">🔐 Root</div>
-    <h1 class="login-title">Panel Admin<br>Violetta Seller</h1>
+    <h1 class="login-title">Panel Admin<br>MiCatalogApp</h1>
     <p class="login-sub">Acceso exclusivo para administradores</p>
     <div class="field"><label>Usuario</label><input type="text" id="lu" placeholder="root" autocomplete="username"></div>
     <div class="field"><label>Contraseña</label><input type="password" id="lp" placeholder="••••••••" autocomplete="current-password"></div>
@@ -153,7 +153,7 @@
 
 <div class="app" id="appWrap">
   <aside class="sidebar">
-    <div class="logo"><div class="logo-text">💜 Violetta Seller</div><div class="logo-sub">Admin Root</div></div>
+    <div class="logo"><div class="logo-text">💜 MiCatalogApp</div><div class="logo-sub">Admin Root</div></div>
     <nav class="nav">
       <div class="nav-item active" onclick="showSec('dashboard')" data-s="dashboard"><span class="icon">📊</span>Dashboard</div>
       <div class="nav-item" onclick="showSec('pedidos')" data-s="pedidos"><span class="icon">📦</span>Pedidos</div>
@@ -161,7 +161,7 @@
       <div class="nav-item" onclick="showSec('vendedoras')" data-s="vendedoras"><span class="icon">👥</span>Vendedoras</div>
       <div class="nav-item" onclick="showSec('clientes')" data-s="clientes"><span class="icon">🙍</span>Clientes</div>
       <div class="nav-item" onclick="showSec('catalogo')" data-s="catalogo"><span class="icon">📚</span>Catálogo</div>
-      <div class="nav-item" onclick="showSec('config')" data-s="config"><span class="icon">⚙️</span>Configuración</div>
+      <div class="nav-item" onclick="showSec('folletos')" data-s="folletos"><span class="icon">📄</span>Folletos</div>
       <div class="nav-item" onclick="showSec('proveedor')" data-s="proveedor"><span class="icon">📦</span>Pedido Proveedor</div>
     </nav>
     <div class="sidebar-footer">
@@ -274,7 +274,7 @@
       <div class="card">
         <div class="card-head">
           <span class="card-title">📊 Importar catálogo desde Excel</span>
-          <span style="font-size:11px;color:var(--text3);">Subí el .xlsx con el formato de Violetta Seller</span>
+          <span style="font-size:11px;color:var(--text3);">Subí el .xlsx con el formato de MiCatalogApp</span>
         </div>
         <div style="padding:20px;">
           <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
@@ -289,10 +289,8 @@
               📂 Seleccionar archivo .xlsx
               <input type="file" id="xlsFile" accept=".xlsx,.xls" style="display:none" onchange="cargarExcelCatalogo(this)">
             </label>
-            <a id="xlsDescargar" href="#" download="plantilla_catalogo_violetta.xlsx" style="display:none">
-              <button class="btn-sm ghost">⬇️ Descargar plantilla</button>
-            </a>
-            <button class="btn-sm ghost" onclick="descargarPlantillaXls()" style="font-size:12px;">⬇️ Descargar plantilla vacía</button>
+            <button class="btn-sm ghost" onclick="descargarPlantillaXls()" style="font-size:12px;">⬇️ Plantilla vacía</button>
+            <button class="btn-sm success" onclick="descargarCatalogoDesdeDB()" style="font-size:12px;background:#059669;">⬇️ Descargar catálogo actual</button>
           </div>
 
           <!-- Preview tabla -->
@@ -342,6 +340,7 @@
           <div class="btns-row">
             <select id="filtCampCat" onchange="renderCatalogo()" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:7px;font-size:12px;font-family:inherit;"><option value="">Todas las campañas</option></select>
             <button class="btn-sm primary" onclick="abrirMProd()">+ Agregar</button>
+            <button class="btn-sm danger" onclick="borrarCampana()" title="Borrar todos los productos de la campaña seleccionada">🗑️ Borrar campaña</button>
           </div>
         </div>
         <div id="cat-list"></div>
@@ -350,30 +349,193 @@
 
     <!-- CONFIG -->
     <div class="section" id="sec-config">
-      <div class="page-header"><h2 class="page-title">Configuración</h2><p class="page-sub">Ajustes globales del sistema</p></div>
+      <div class="page-header"><h2 class="page-title">Links del sistema</h2><p class="page-sub">Links para compartir con vendedoras y clientas</p></div>
       <div class="cfg-card">
-        <h3>🗄️ Supabase — Base de datos</h3>
-        <p>Esta configuración aplica a todo el sistema. Las vendedoras y clientes usan el mismo localStorage del dominio.</p>
-        <div class="field"><label>URL del proyecto</label><input type="text" id="cfgUrl" placeholder="https://xxxx.supabase.co"></div>
-        <div class="field"><label>Anon Key</label><input type="text" id="cfgKey" placeholder="eyJhbGc..."></div>
-        <button class="btn-sm primary" onclick="guardarConfig()" style="width:100%;padding:12px;font-size:13px;">Guardar configuración</button>
-        <div id="cfgSt" style="margin-top:10px;font-size:12px;color:var(--text2);"></div>
-      </div>
-      <div class="cfg-card">
-        <h3>📋 SQL para crear tablas</h3>
-        <p>Ejecutá esto en el SQL Editor de Supabase (una sola vez):</p>
-        <details>
-          <summary style="cursor:pointer;color:var(--accent);font-size:13px;font-weight:600;">Ver código SQL ▼</summary>
-          <pre id="sqlCode" style="margin-top:12px;background:var(--bg);border:1px solid var(--border);padding:16px;border-radius:8px;font-size:11px;overflow-x:auto;color:var(--text2);line-height:1.7;white-space:pre-wrap;"></pre>
-          <button class="btn-sm ghost" onclick="copiarSQL()" style="margin-top:8px;">📋 Copiar SQL</button>
-        </details>
-      </div>
-      <div class="cfg-card">
-        <h3>🔗 Links del sistema</h3>
+        <h3>🔗 Links</h3>
         <div style="display:flex;flex-direction:column;gap:10px;">
           <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;"><span style="font-size:12px;color:var(--text2);">🙍 Clientes → <code>cliente.html</code></span><button class="btn-sm ghost" onclick="copyLink('cliente.html')">📋</button></div>
           <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;"><span style="font-size:12px;color:var(--text2);">💼 Vendedoras → <code>vendedora.html</code></span><button class="btn-sm ghost" onclick="copyLink('vendedora.html')">📋</button></div>
         </div>
+      </div>
+    </div>
+
+    <!-- FOLLETOS -->
+    <div class="section" id="sec-folletos">
+      <div class="page-header">
+        <h2 class="page-title">📄 Gestión de Folletos</h2>
+        <p class="page-sub">Subí los PDFs de cada campaña y configurá el año del sistema</p>
+      </div>
+
+      <!-- Configuración del año -->
+      <div class="cfg-card" style="margin-bottom:18px;">
+        <h3>🗓️ Año de campaña</h3>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:14px;">
+          El año se usa para construir el nombre del PDF (ej: <code>folleto_c626.pdf</code> = campaña 6, año 26).
+          Cambialo cuando empiece el nuevo año sin tocar código.
+        </p>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <div class="field" style="margin:0;">
+            <label>Año actual (2 dígitos)</label>
+            <input type="text" id="cfgAño" maxlength="2" placeholder="26"
+              style="width:80px;text-align:center;font-size:20px;font-weight:700;">
+          </div>
+          <button class="btn-sm primary" onclick="guardarAño()" style="margin-top:18px;">
+            💾 Guardar año
+          </button>
+          <span id="año-estado" style="font-size:12px;color:var(--success);margin-top:18px;"></span>
+        </div>
+        <p style="font-size:12px;color:var(--text2);margin-top:10px;">
+          ℹ️ Este valor se guarda en el sistema y el panel de clientas lo usa automáticamente.
+          Cuando sea 2027 → ponés <strong>27</strong>.
+        </p>
+      </div>
+
+      <!-- Subir folletos via GitHub API -->
+      <div class="cfg-card" style="margin-bottom:18px;">
+        <h3>📤 Subir folleto al repositorio</h3>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:14px;">
+          Subí el PDF de cada campaña directamente desde acá. Se sube al repo de GitHub automáticamente.
+          Necesitás un <strong>GitHub Personal Access Token</strong> con permiso <code>contents:write</code>.
+        </p>
+
+        <!-- Token -->
+        <div class="field">
+          <label>GitHub Token (se guarda localmente, no viaja a ningún servidor)</label>
+          <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+            oninput="document.getElementById('ghTokenSt').textContent=''">
+          <span id="ghTokenSt" style="font-size:11px;color:var(--success);"></span>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+          <button class="btn-sm ghost" onclick="guardarToken()">💾 Guardar token</button>
+          <button class="btn-sm ghost" onclick="verificarToken()">🔍 Verificar acceso</button>
+        </div>
+
+        <!-- Instrucciones token -->
+        <details style="margin-bottom:16px;">
+          <summary style="cursor:pointer;font-size:12px;color:var(--accent);font-weight:600;">
+            ¿Cómo obtengo el token? ▼
+          </summary>
+          <div style="margin-top:10px;font-size:12px;color:var(--text2);line-height:1.7;background:var(--bg);padding:12px;border-radius:8px;">
+            1. Andá a <strong>github.com → tu perfil → Settings</strong><br>
+            2. Al final del menú izquierdo: <strong>Developer settings</strong><br>
+            3. <strong>Personal access tokens → Tokens (classic) → Generate new token</strong><br>
+            4. En scopes: marcá solo ✅ <strong>repo</strong> (o <strong>public_repo</strong> si el repo es público)<br>
+            5. Copiá el token y pegalo arriba<br>
+            <br>
+            ⚠️ El token se guarda solo en este navegador (localStorage). Nadie más lo ve.
+          </div>
+        </details>
+
+        <!-- Subida -->
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+          <div class="field" style="margin:0;">
+            <label>Número de campaña</label>
+            <input type="number" id="follCamp" placeholder="7" min="1" max="99"
+              style="width:80px;text-align:center;font-size:18px;font-weight:700;">
+          </div>
+          <div class="field" style="margin:0;flex:1;min-width:200px;">
+            <label>Archivo PDF del folleto</label>
+            <input type="file" id="follFile" accept=".pdf"
+              onchange="previewFolleto(this)">
+          </div>
+          <button class="btn-sm primary" onclick="subirFolleto()" style="height:42px;">
+            📤 Subir al repo
+          </button>
+        </div>
+        <div id="follPreview" style="margin-top:10px;font-size:12px;color:var(--text2);"></div>
+        <div id="follProgreso" style="margin-top:12px;display:none;">
+          <div style="background:#e9d5ff;border-radius:999px;height:8px;overflow:hidden;">
+            <div id="follBar" style="background:var(--accent);height:100%;width:0%;transition:width .3s;border-radius:999px;"></div>
+          </div>
+          <div id="follTxt" style="font-size:12px;color:var(--text2);margin-top:6px;"></div>
+        </div>
+      </div>
+
+      <!-- Lista de folletos en el repo -->
+      <div class="cfg-card">
+        <h3>📋 Folletos disponibles en el repo</h3>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:12px;">
+          Folletos que ya están subidos al repositorio y disponibles para las clientas.
+        </p>
+        <button class="btn-sm ghost" onclick="listarFolletos()" style="margin-bottom:12px;">
+          🔄 Ver folletos subidos
+        </button>
+        <div id="follLista" style="font-size:13px;color:var(--text2);">
+          Tocá "Ver folletos subidos" para cargar la lista.
+        </div>
+      </div>
+
+      <!-- Editor de hotspots -->
+      <div class="cfg-card">
+        <h3>🎯 Editor de posiciones de productos</h3>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:14px;">
+          Abrí el folleto, navegá a una página y tocá donde está cada producto para asignarle su código.
+          Los botones aparecerán en esa posición exacta para las clientas.
+        </p>
+
+        <!-- Controles del editor -->
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px;">
+          <div class="field" style="margin:0;">
+            <label>Campaña</label>
+            <input type="text" id="hs-campana" placeholder="6/26" style="width:80px;">
+          </div>
+          <button class="btn-sm primary" onclick="iniciarEditorHotspots()">
+            📖 Abrir folleto para editar
+          </button>
+          <button class="btn-sm ghost" onclick="cargarHotspotsExistentes()">
+            🔄 Ver hotspots guardados
+          </button>
+          <button class="btn-sm danger" onclick="borrarHotspotsCampana()">
+            🗑️ Borrar todos de esta campaña
+          </button>
+        </div>
+
+        <!-- Visor del folleto con hotspots -->
+        <div id="hs-editor-wrap" style="display:none;">
+          <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+            <button class="btn-sm ghost" onclick="hsPagAnterior()">← Anterior</button>
+            <span id="hs-pag-label" style="font-size:13px;font-weight:700;color:var(--accent);">Página — / —</span>
+            <button class="btn-sm ghost" onclick="hsPageSiguiente()">Siguiente →</button>
+            <span style="font-size:12px;color:var(--text2);margin-left:8px;">
+              💡 Tocá sobre el folleto para agregar un hotspot
+            </span>
+          </div>
+
+          <!-- Canvas del folleto con overlay para clicks -->
+          <div style="position:relative;display:inline-block;border:2px solid var(--accent);border-radius:10px;overflow:hidden;cursor:crosshair;max-width:100%;">
+            <canvas id="hs-canvas" style="display:block;max-width:100%;"></canvas>
+            <div id="hs-overlay" style="position:absolute;inset:0;" onclick="hsClick(event)"></div>
+            <div id="hs-dots" style="position:absolute;inset:0;pointer-events:none;"></div>
+          </div>
+        </div>
+
+        <!-- Modal para asignar código al hotspot -->
+        <div id="hs-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;">
+          <div style="background:white;border-radius:20px;padding:28px 24px;max-width:420px;width:90%;box-shadow:0 24px 64px rgba(0,0,0,.3);">
+            <div style="font-size:17px;font-weight:800;color:var(--accent);margin-bottom:16px;">
+              🎯 Asignar producto a esta posición
+            </div>
+            <div class="field">
+              <label>Buscar producto</label>
+              <input type="text" id="hs-buscar" placeholder="Nombre o código..."
+                oninput="hsBuscarProducto(this.value)"
+                style="width:100%;border:2px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;">
+            </div>
+            <div id="hs-resultados" style="max-height:200px;overflow-y:auto;margin-bottom:14px;display:flex;flex-direction:column;gap:6px;"></div>
+            <div id="hs-seleccionado" style="display:none;background:#ECFDF5;border:2px solid #059669;border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:13px;">
+              ✅ <span id="hs-sel-texto"></span>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn-sm primary" onclick="hsConfirmarHotspot()" id="hs-confirmar" disabled>
+                💾 Guardar posición
+              </button>
+              <button class="btn-sm ghost" onclick="hsCancelarModal()">Cancelar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lista de hotspots guardados -->
+        <div id="hs-lista" style="margin-top:16px;"></div>
       </div>
     </div>
 
@@ -402,6 +564,7 @@
           <button class="btn-sm ghost" onclick="apSelAll(true)">✅ Seleccionar todos</button>
           <button class="btn-sm ghost" onclick="apSelAll(false)">⬜ Deseleccionar todos</button>
           <button class="btn-sm primary" onclick="imprimirAdminProveedor()">🖨️ Imprimir selección</button>
+          <button class="btn-sm success" onclick="exportarExcelAdminProveedor()" style="background:#059669;">📥 Excel Violetta</button>
         </div>
       </div>
 
@@ -449,22 +612,48 @@
   <div class="modal">
     <h3>📦 <span id="mProdTit">Nuevo Producto</span></h3>
     <input type="hidden" id="mProdId">
-    <div class="field"><label>Nombre del producto</label><input type="text" id="mProdNom"></div>
-    <div class="field"><label>Precio ($)</label><input type="number" id="mProdPrecio"></div>
-    <div class="field"><label>Campaña</label><input type="text" id="mProdCamp" placeholder="Ej: Campaña 14"></div>
-    <div class="field"><label>Código (opcional)</label><input type="text" id="mProdCod"></div>
-    <div class="field"><label>Categoría</label><input type="text" id="mProdCat"></div>
-    <div class="field"><label>Descripción</label><textarea id="mProdDesc"></textarea></div>
-    <div class="modal-btns"><button class="cancel" onclick="cerrarModal('modalProd')">Cancelar</button><button class="confirm" onclick="guardarProducto()">Guardar</button></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px;">
+      <div class="field" style="grid-column:1/-1"><label>Nombre del producto</label><input type="text" id="mProdNom" placeholder="Nombre completo"></div>
+      <div class="field"><label>Código SKU</label><input type="text" id="mProdCod" placeholder="101786"></div>
+      <div class="field"><label>Campaña</label><input type="text" id="mProdCamp" placeholder="6/26"></div>
+      <div class="field"><label>Precio ($)</label><input type="number" id="mProdPrecio" placeholder="0.00" step="0.01"></div>
+      <div class="field"><label>Precio tachado ($)</label><input type="number" id="mProdPrecioTach" placeholder="0.00" step="0.01"></div>
+      <div class="field"><label>Tipo de promo</label>
+        <select id="mProdPromoTipo">
+          <option value="normal">Normal (sin promo)</option>
+          <option value="lanzamiento">🚀 Lanzamiento</option>
+          <option value="oferta_especial">⚡ Oferta especial</option>
+          <option value="escala">📊 Escala (2+ unidades)</option>
+          <option value="con_compra">🎁 Con la compra</option>
+        </select>
+      </div>
+      <div class="field"><label>Precio promo x2 ($)</label><input type="number" id="mProdPrecio2" placeholder="0.00" step="0.01"></div>
+      <div class="field" style="grid-column:1/-1"><label>Detalle de promo</label><input type="text" id="mProdDetalle" placeholder="Ej: Llevá 2 al precio de 1.5"></div>
+      <div class="field"><label>Grupo promo</label><input type="text" id="mProdGrupo" placeholder="Ej: protect_escala"></div>
+      <div class="field"><label>Página folleto</label><input type="text" id="mProdPagina" placeholder="Ej: 10  o  10-13"></div>
+    </div>
+    <div id="mProdDupWarning" style="display:none;background:#FEF3C7;border:1px solid #F59E0B;border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:13px;color:#92400E;"></div>
+    <div class="modal-btns">
+      <button class="cancel" onclick="cerrarModal('modalProd')">Cancelar</button>
+      <button class="confirm" onclick="guardarProducto()">Guardar</button>
+    </div>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-const ROOT={user:'root',pass:'Root.415263'};
-const _DEFAULT_SU='https://vangwjxeebbzbqejyzsp.supabase.co',_DEFAULT_SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhbmd3anhlZWJiemJxZWp5enNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxODc2NDgsImV4cCI6MjA5MTc2MzY0OH0.IjFNt8t1-YU4aUOgB-y8UFGAgHqL8qFNOwCIyxCvFj8';
-let SU=_DEFAULT_SU,SK=_DEFAULT_SK;
+// Credenciales del admin — solo el hash SHA-256 de la contraseña está en el código
+// La contraseña real no está aquí — nadie puede recuperarla desde el hash
+const ROOT_USER = 'root';
+const ROOT_HASH = 'e2ff472ee6806ad10480db6a306cf4c05c654b936f989f1a40f9c9d401b66ec8';
+
+async function hashPass(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+const SU='https://vangwjxeebbzbqejyzsp.supabase.co';
+const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhbmd3anhlZWJiemJxZWp5enNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxODc2NDgsImV4cCI6MjA5MTc2MzY0OH0.IjFNt8t1-YU4aUOgB-y8UFGAgHqL8qFNOwCIyxCvFj8';
 let allPeds=[],allVends=[],allClis=[],allProds=[];
 
 function H(){return{'Content-Type':'application/json','apikey':SK,'Authorization':'Bearer '+SK};}
@@ -475,12 +664,21 @@ async function sDel(t,id){const r=await fetch(`${SU}/rest/v1/${t}?id=eq.${id}`,{
 
 function toast(msg,type=''){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type} show`;setTimeout(()=>t.classList.remove('show'),3000);}
 
-function doLogin(){
-  const u=document.getElementById('lu').value.trim(),p=document.getElementById('lp').value;
-  if(u===ROOT.user&&p===ROOT.pass){localStorage.setItem('va_root','1');document.getElementById('loginWrap').style.display='none';document.getElementById('appWrap').style.display='block';initCfg();cargarTodo();}
-  else{const e=document.getElementById('lErr');e.style.display='block';setTimeout(()=>e.style.display='none',3000);}
+async function doLogin(){
+  const u=document.getElementById('lu').value.trim();
+  const p=document.getElementById('lp').value;
+  if(!u||!p){const e=document.getElementById('lErr');e.style.display='block';setTimeout(()=>e.style.display='none',3000);return;}
+  const h = await hashPass(p);
+  if(u===ROOT_USER && h===ROOT_HASH){
+    localStorage.setItem('mca_root','1');
+    document.getElementById('loginWrap').style.display='none';
+    document.getElementById('appWrap').style.display='block';
+    initCfg();cargarTodo();
+  } else {
+    const e=document.getElementById('lErr');e.style.display='block';setTimeout(()=>e.style.display='none',3000);
+  }
 }
-function doLogout(){localStorage.removeItem('va_root');location.reload();}
+function doLogout(){localStorage.removeItem('mca_root');location.reload();}
 
 function showSec(id){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
@@ -489,12 +687,13 @@ function showSec(id){
   document.querySelector(`[data-s="${id}"]`).classList.add('active');
   if(id==='reportes')buildReportes();
   if(id==='proveedor')buildAdminProveedor();
+  if(id==='folletos')initFolletos();
 }
 
 async function cargarTodo(){
   if(!SU||!SK){document.getElementById('dash-ped').innerHTML='<div class="empty">⚙️ Configurá Supabase primero en Configuración</div>';return;}
   try{
-    [allPeds,allVends,allClis,allProds]=await Promise.all([sGet('pedidos','order=created_at.desc'),sGet('vendedoras','order=nombre.asc'),sGet('clientes','order=nombre.asc'),sGet('productos','order=campana.asc,nombre.asc')]);
+    [allPeds,allVends,allClis,allProds]=await Promise.all([sGet('pedidos','select=*&order=created_at.desc&limit=1000'),sGet('vendedoras','order=nombre.asc'),sGet('clientes','order=nombre.asc'),sGet('productos','order=campana.asc,nombre.asc')]);
     updStats();renderDash();renderVendedoras();renderPedidos();renderClientes();renderCatalogo();updFiltros();
   }catch(e){document.getElementById('dash-ped').innerHTML=`<div class="empty">❌ ${e.message}</div>`;}
 }
@@ -513,7 +712,7 @@ function renderDash(){
   const rows=allPeds.slice(0,12);
   if(!rows.length){document.getElementById('dash-ped').innerHTML='<div class="empty">Sin pedidos</div>';return;}
   let h='<table><thead><tr><th>Fecha</th><th>Cliente</th><th>Vendedora</th><th>Campaña</th><th>Total</th><th>Estado</th></tr></thead><tbody>';
-  rows.forEach(p=>{h+=`<tr><td style="font-weight:700;color:var(--accent);font-size:12px;">${p.numero_pedido?'#'+p.numero_pedido:'—'}</td><td style="font-size:11px;color:var(--text3)">${p.fecha||'—'}</td><td>${p.nombre||'—'}</td><td style="font-size:11px">${p.vendedora_username||'—'}</td><td style="font-size:11px">${p.campana||'—'}</td><td style="font-weight:700;color:var(--accent)">${p.total?'$'+Number(p.total).toLocaleString('es-AR'):'—'}</td><td>${sBadge(p.estado)}</td></tr>`;});
+  rows.forEach(p=>{h+=`<tr><td style="font-weight:700;color:var(--accent);font-size:12px;">${p.numero_pedido?'#'+p.numero_pedido:'—'}</td><td style="font-size:11px;color:var(--text3)">${p.fecha||p.created_at?new Date(p.created_at).toLocaleDateString('es-AR'):''}</td><td>${p.nombre_cliente||p.nombre||'—'}</td><td style="font-size:11px">${p.vendedora_username||'—'}</td><td style="font-size:11px">${p.campana||'—'}</td><td style="font-weight:700;color:var(--accent)">${p.total?'$'+Number(p.total).toLocaleString('es-AR'):'—'}</td><td>${sBadge(p.estado)}</td></tr>`;});
   document.getElementById('dash-ped').innerHTML=h+'</tbody></table>';
 }
 
@@ -523,7 +722,7 @@ function renderPedidos(){
   const vend=document.getElementById('filtVend')?.value||'';
   const camp=document.getElementById('filtCamp')?.value||'';
   let f=allPeds.filter(p=>{
-    const ms=!s||(p.nombre||'').toLowerCase().includes(s)||(p.telefono||'').includes(s)||(p.dni_cliente||'').includes(s)||String(p.numero_pedido||'').includes(s);
+    const ms=!s||(p.nombre_cliente||p.nombre||'').toLowerCase().includes(s)||(p.telefono||'').includes(s)||(p.dni_cliente||'').includes(s)||String(p.numero_pedido||'').includes(s);
     return ms&&(!est||p.estado===est)&&(!vend||p.vendedora_username===vend)&&(!camp||p.campana===camp);
   });
   if(!f.length){document.getElementById('all-ped').innerHTML='<div class="empty">Sin resultados</div>';return;}
@@ -536,12 +735,12 @@ function renderPedidos(){
       :`<div class="total-edit"><input type="number" placeholder="$0" id="tot_${p.id}"><button onclick="setTotal('${p.id}')">✓</button></div>`;
     const lugarSel=`<select style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px;border-radius:6px;font-size:11px;font-family:inherit;" onchange="cambiarLugar('${p.id}',this.value)">${lugarOpts.map(l=>`<option value="${l}" ${(p.lugar||'Otro')===l?'selected':''}>${l}</option>`).join('')}</select>`;
     const estadoSel=`<select style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px;border-radius:6px;font-size:11px;font-family:inherit;" onchange="cambiarEstado('${p.id}',this.value)"><option value="pendiente" ${p.estado==='pendiente'?'selected':''}>⏳</option><option value="listo" ${p.estado==='listo'?'selected':''}>✅</option><option value="entregado" ${p.estado==='entregado'?'selected':''}>📬</option><option value="cobrado" ${p.estado==='cobrado'?'selected':''}>💰</option><option value="cancelado" ${p.estado==='cancelado'?'selected':''}>❌</option></select>`;
-    const nombre=encodeURIComponent(p.nombre||'');
+    const nombre=encodeURIComponent(p.nombre_cliente||p.nombre||'');
     const delBtn=`<button class="btn-sm danger" style="padding:5px 8px;" onclick="confirmarEliminar('${p.id}','${nombre}')" title="Eliminar pedido">🗑️</button>`;
     h+=`<tr>
       <td style="font-weight:700;color:var(--accent);font-size:12px;">${nro}</td>
-      <td style="font-size:11px;color:var(--text3)">${p.fecha||'—'}</td>
-      <td><strong>${p.nombre||'—'}</strong><br><span style="font-size:10px;color:var(--text3)">${p.dni_cliente||''}</span></td>
+      <td style="font-size:11px;color:var(--text3)">${p.created_at ? new Date(p.created_at).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'}) : (p.fecha||'—')}</td>
+      <td><strong>${p.nombre_cliente||p.nombre||'—'}</strong><br><span style="font-size:10px;color:var(--text3)">${p.dni_cliente||''}</span></td>
       <td style="font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.productos||'—'}</td>
       <td style="font-size:11px">${p.vendedora_username||'—'}</td>
       <td>${lugarSel}</td>
@@ -603,7 +802,7 @@ function buildReportes(){
   let vh='<table><thead><tr><th>Vendedora</th><th>Pedidos</th><th>Facturado</th></tr></thead><tbody>';
   Object.entries(vr).sort((a,b)=>b[1].pedidos-a[1].pedidos).forEach(([v,d])=>{vh+=`<tr><td><strong>${v}</strong></td><td>${d.pedidos}</td><td style="color:var(--accent)">${d.total?'$'+d.total.toLocaleString('es-AR'):'—'}</td></tr>`;});
   document.getElementById('rep-vend-tbl').innerHTML=vh+'</tbody></table>';
-  const cr={};allPeds.forEach(p=>{const k=p.nombre||'—';if(!cr[k])cr[k]={pedidos:0,dni:p.dni_cliente||''};cr[k].pedidos++;});
+  const cr={};allPeds.forEach(p=>{const k=p.nombre_cliente||p.nombre||'—';if(!cr[k])cr[k]={pedidos:0,dni:p.dni_cliente||''};cr[k].pedidos++;cr[k].tel=p.telefono||'';});
   let ch='<table><thead><tr><th>Cliente</th><th>DNI</th><th>Pedidos</th></tr></thead><tbody>';
   Object.entries(cr).sort((a,b)=>b[1].pedidos-a[1].pedidos).forEach(([n,d])=>{ch+=`<tr><td><strong>${n}</strong></td><td>${d.dni}</td><td><span class="badge listo">${d.pedidos}</span></td></tr>`;});
   document.getElementById('rep-cli-tbl').innerHTML=ch+'</tbody></table>';
@@ -632,8 +831,36 @@ function renderClientes(){
   let f=allClis.filter(c=>!s||(c.nombre||'').toLowerCase().includes(s)||(c.dni||'').includes(s));
   if(!f.length){document.getElementById('cli-list').innerHTML='<div class="empty">Sin clientes</div>';return;}
   let h='<table><thead><tr><th>Nombre</th><th>DNI</th><th>Teléfono</th><th>Dirección</th><th>Pedidos</th><th>Acciones</th></tr></thead><tbody>';
-  f.forEach(c=>{const t=allPeds.filter(p=>p.dni_cliente===c.dni||p.cliente_id===c.id).length;h+=`<tr><td><strong>${c.nombre}</strong></td><td>${c.dni||'—'}</td><td>${c.telefono||'—'}</td><td style="font-size:11px">${c.direccion||'—'}</td><td><span class="badge listo">${t}</span></td><td><button class="btn-sm ghost" onclick="editCli('${c.id}')">✏️ Editar</button></td></tr>`;});
+  f.forEach(c=>{
+    const t=allPeds.filter(p=>p.dni_cliente===c.dni||p.cliente_id===c.id).length;
+    h+=`<tr>
+      <td><strong>${c.nombre}</strong></td>
+      <td>${c.dni||'—'}</td>
+      <td>${c.telefono||'—'}</td>
+      <td style="font-size:11px">${c.direccion||'—'}</td>
+      <td><span class="badge listo">${t}</span></td>
+      <td>
+        <button class="btn-sm ghost" onclick="editCli('${c.id}')">✏️ Editar</button>
+        <button class="btn-sm danger" style="margin-left:4px;" onclick="eliminarCliente('${c.id}','${encodeURIComponent(c.nombre||'')}')" title="Eliminar cliente">🗑️</button>
+      </td>
+    </tr>`;
+  });
   document.getElementById('cli-list').innerHTML=h+'</tbody></table>';
+}
+
+async function eliminarCliente(id, nombreEnc){
+  const nombre = decodeURIComponent(nombreEnc||'');
+  const peds = allPeds.filter(p=>p.cliente_id===id).length;
+  let msg = '¿Eliminar a "'+nombre+'"?\nEsta acción no se puede deshacer.';
+  if(peds > 0) msg = '⚠️ Este cliente tiene '+peds+' pedido(s) registrado(s).\n\n'+msg;
+  if(!confirm(msg)) return;
+  try{
+    await sDel('clientes',id);
+    allClis=allClis.filter(c=>c.id!==id);
+    renderClientes();
+    document.getElementById('st-cli').textContent=allClis.length;
+    toast('✅ Cliente eliminado','ok');
+  }catch(e){ toast('❌ '+e.message,'err'); }
 }
 function abrirMCli(){document.getElementById('mCliId').value='';document.getElementById('mCliTit').textContent='Nuevo Cliente';['mCliNom','mCliDni','mCliTel','mCliDir'].forEach(id=>document.getElementById(id).value='');document.getElementById('modalCli').classList.add('open');}
 function editCli(id){const c=allClis.find(x=>x.id===id);if(!c)return;document.getElementById('mCliId').value=c.id;document.getElementById('mCliTit').textContent='Editar Cliente';document.getElementById('mCliNom').value=c.nombre;document.getElementById('mCliDni').value=c.dni||'';document.getElementById('mCliTel').value=c.telefono||'';document.getElementById('mCliDir').value=c.direccion||'';document.getElementById('modalCli').classList.add('open');}
@@ -649,15 +876,103 @@ function renderCatalogo(){
   const f=allProds.filter(p=>!camp||p.campana===camp);
   if(!f.length){document.getElementById('cat-list').innerHTML='<div class="empty">Sin productos.</div>';return;}
   let h='<table><thead><tr><th>Producto</th><th>Campaña</th><th>Categoría</th><th>Precio</th><th>Acciones</th></tr></thead><tbody>';
-  f.forEach(p=>{h+=`<tr><td><strong>${p.nombre}</strong>${p.descripcion?`<br><span style="font-size:10px;color:var(--text3)">${p.descripcion}</span>`:''}</td><td style="font-size:11px">${p.campana||'—'}</td><td style="font-size:11px">${p.categoria||'—'}</td><td style="font-weight:700;color:var(--accent)">${p.precio?'$'+Number(p.precio).toLocaleString('es-AR'):'—'}</td><td><div class="btns-row"><button class="btn-sm ghost" onclick="editProd('${p.id}')">✏️</button><button class="btn-sm danger" onclick="elimProd('${p.id}')">🗑️</button></div></td></tr>`;});
+  f.forEach(p=>{h+=`<tr><td><strong>${p.nombre}</strong><br><span style="font-size:10px;color:var(--text3)">${p.codigo||''}</span></td><td style="font-size:11px">${p.campana||'—'}</td><td style="font-size:11px">${p.promo_tipo||'—'}</td><td style="font-weight:700;color:var(--accent)">${p.precio?'$'+Number(p.precio).toLocaleString('es-AR'):'—'}</td><td><div class="btns-row"><button class="btn-sm ghost" onclick="editProd('${p.id}')">✏️</button><button class="btn-sm danger" onclick="elimProd('${p.id}')">🗑️</button></div></td></tr>`;});
   document.getElementById('cat-list').innerHTML=h+'</tbody></table>';
 }
-function abrirMProd(){document.getElementById('mProdId').value='';document.getElementById('mProdTit').textContent='Nuevo Producto';['mProdNom','mProdPrecio','mProdCamp','mProdCod','mProdCat','mProdDesc'].forEach(id=>document.getElementById(id).value='');document.getElementById('modalProd').classList.add('open');}
-function editProd(id){const p=allProds.find(x=>x.id===id);if(!p)return;document.getElementById('mProdId').value=p.id;document.getElementById('mProdTit').textContent='Editar Producto';document.getElementById('mProdNom').value=p.nombre;document.getElementById('mProdPrecio').value=p.precio||'';document.getElementById('mProdCamp').value=p.campana||'';document.getElementById('mProdCod').value=p.codigo||'';document.getElementById('mProdCat').value=p.categoria||'';document.getElementById('mProdDesc').value=p.descripcion||'';document.getElementById('modalProd').classList.add('open');}
+async function borrarCampana(){
+  const camp = document.getElementById('filtCampCat')?.value;
+  if(!camp){ toast('⚠️ Seleccioná una campaña del filtro primero','err'); return; }
+  const prods = allProds.filter(p=>p.campana===camp);
+  if(!prods.length){ toast('No hay productos en esa campaña','err'); return; }
+  if(!confirm(`⚠️ ATENCIÓN: Vas a BORRAR PERMANENTEMENTE los ${prods.length} productos de la campaña "${camp}".
+
+Esta acción NO SE PUEDE DESHACER.
+
+¿Estás seguro?`)) return;
+  if(!confirm(`Segunda confirmación — ¿BORRAR los ${prods.length} productos de "${camp}"?`)) return;
+  toast(`⏳ Borrando ${prods.length} productos...`);
+  let ok=0, err=0;
+  for(const p of prods){
+    try{ await sDel('productos',p.id); ok++; }
+    catch(e){ err++; console.error('Error borrando',p.id,e); }
+  }
+  toast(`✅ ${ok} productos borrados${err?' · ⚠️ '+err+' errores':''}`, err?'err':'ok');
+  await cargarTodo();
+}
+
+function abrirMProd(){
+  document.getElementById('mProdId').value='';
+  document.getElementById('mProdTit').textContent='Nuevo Producto';
+  ['mProdNom','mProdCod','mProdCamp','mProdPrecio','mProdPrecioTach',
+   'mProdPrecio2','mProdDetalle','mProdGrupo','mProdPagina'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  const sel=document.getElementById('mProdPromoTipo'); if(sel) sel.value='normal';
+  document.getElementById('mProdDupWarning').style.display='none';
+  document.getElementById('modalProd').classList.add('open');
+}
+function editProd(id){
+  const p=allProds.find(x=>x.id===id);
+  if(!p)return;
+  document.getElementById('mProdId').value=p.id;
+  document.getElementById('mProdTit').textContent='Editar Producto';
+  document.getElementById('mProdNom').value=p.nombre||'';
+  document.getElementById('mProdCod').value=p.codigo||'';
+  document.getElementById('mProdCamp').value=p.campana||'';
+  document.getElementById('mProdPrecio').value=p.precio||'';
+  document.getElementById('mProdPrecioTach').value=p.precio_tachado||'';
+  document.getElementById('mProdPrecio2').value=p.precio_promo_2||'';
+  document.getElementById('mProdDetalle').value=p.promo_detalle||'';
+  document.getElementById('mProdGrupo').value=p.promo_grupo||'';
+  document.getElementById('mProdPagina').value=p.pagina||'';
+  const sel=document.getElementById('mProdPromoTipo');
+  if(sel) sel.value=p.promo_tipo||'normal';
+  // Verificar si hay otro producto con mismo código y campaña
+  const dup=allProds.find(x=>x.id!==id && x.codigo===p.codigo && x.campana===p.campana);
+  const warn=document.getElementById('mProdDupWarning');
+  if(dup){ warn.style.display='block'; warn.textContent='⚠️ Atención: hay otro producto con el mismo código ('+p.codigo+') y campaña ('+p.campana+'). Guardar va a pisar el existente.'; }
+  else { warn.style.display='none'; }
+  document.getElementById('modalProd').classList.add('open');
+}
 async function guardarProducto(){
-  const id=document.getElementById('mProdId').value;const nombre=document.getElementById('mProdNom').value.trim();if(!nombre){toast('Ingresá el nombre','err');return;}
-  const data={nombre,precio:parseFloat(document.getElementById('mProdPrecio').value)||null,campana:document.getElementById('mProdCamp').value.trim(),codigo:document.getElementById('mProdCod').value.trim(),categoria:document.getElementById('mProdCat').value.trim(),descripcion:document.getElementById('mProdDesc').value.trim()};
-  try{id?await sPatch('productos',id,data):await sPost('productos',data);toast('✅ Guardado','ok');cerrarModal('modalProd');await cargarTodo();}catch(e){toast('❌ '+e.message,'err');}
+  const id     = document.getElementById('mProdId').value;
+  const nombre = document.getElementById('mProdNom').value.trim();
+  const codigo = document.getElementById('mProdCod').value.trim();
+  const campana= document.getElementById('mProdCamp').value.trim();
+  if(!nombre){ toast('⚠️ Ingresá el nombre del producto','err'); return; }
+  if(!campana){ toast('⚠️ Ingresá la campaña (ej: 6/26)','err'); return; }
+  // Verificar duplicado antes de guardar
+  if(!id){
+    const dup=allProds.find(p=>p.codigo===codigo && p.campana===campana);
+    if(dup && !confirm('Atencion: Ya existe codigo '+codigo+' en campana '+campana+'. Queres pisarlo?')) return;
+  }
+  const data={
+    nombre,
+    codigo,
+    campana,
+    precio:         parseFloat(document.getElementById('mProdPrecio').value)||null,
+    precio_tachado: parseFloat(document.getElementById('mProdPrecioTach').value)||null,
+    promo_tipo:     document.getElementById('mProdPromoTipo').value||'normal',
+    promo_detalle:  document.getElementById('mProdDetalle').value.trim()||null,
+    promo_grupo:    document.getElementById('mProdGrupo').value.trim()||null,
+    precio_promo_2: parseFloat(document.getElementById('mProdPrecio2').value)||null,
+    pagina:         document.getElementById('mProdPagina').value.trim()||null,
+  };
+  try{
+    id ? await sPatch('productos',id,data) : await sPost('productos',data);
+    toast('✅ Producto guardado','ok');
+    cerrarModal('modalProd');
+    await cargarTodo();
+  }catch(e){
+    // Error detallado
+    let msg = e.message||'Error desconocido';
+    if(msg.includes('duplicate') || msg.includes('unique')) msg='⚠️ Código duplicado: ya existe ese código en esa campaña';
+    else if(msg.includes('null value') || msg.includes('not-null')) msg='⚠️ Falta un campo obligatorio: '+msg;
+    else if(msg.includes('invalid input')) msg='⚠️ Formato inválido en algún campo numérico';
+    else if(msg.includes('JWT') || msg.includes('401')) msg='⚠️ Sin permisos — verificá la anon key';
+    toast('❌ '+msg,'err');
+    console.error('guardarProducto error:', e);
+  }
 }
 async function elimProd(id){if(!confirm('¿Eliminar producto?'))return;try{await sDel('productos',id);toast('🗑️ Eliminado');await cargarTodo();}catch(e){toast('❌ '+e.message,'err');}}
 
@@ -688,7 +1003,7 @@ function renderAI(prods){
     <div class="prod-item-ai" id="aip_${i}">
       <input class="n" type="text" value="${p.nombre||''}" placeholder="Nombre" id="ain_${i}">
       <input class="p" type="number" value="${p.precio||''}" placeholder="Precio" id="aip2_${i}">
-      <input class="cat" type="text" value="${p.categoria||''}" placeholder="Categoría" id="aicat_${i}">
+
       <button class="del" onclick="document.getElementById('aip_${i}').remove()">✕</button>
     </div>`).join('');
   document.getElementById('aiProdsList').innerHTML=h;
@@ -699,28 +1014,15 @@ async function guardarProdsAI(){
   const rows=document.querySelectorAll('.prod-item-ai');
   const camp=prompt('¿A qué campaña pertenecen estos productos? (Ej: Campaña 14)','Campaña ');
   if(!camp)return;
-  const prods=[...rows].map(r=>{const i=r.id.replace('aip_','');return{nombre:document.getElementById('ain_'+i)?.value||'',precio:parseFloat(document.getElementById('aip2_'+i)?.value)||null,categoria:document.getElementById('aicat_'+i)?.value||'',campana:camp};}).filter(p=>p.nombre);
+  const prods=[...rows].map(r=>{const i=r.id.replace('aip_','');return{nombre:document.getElementById('ain_'+i)?.value||'',precio:parseFloat(document.getElementById('aip2_'+i)?.value)||null,campana:camp};}).filter(p=>p.nombre);
   if(!prods.length){toast('Sin productos','err');return;}
   try{for(const p of prods)await sPost('productos',p);toast(`✅ ${prods.length} productos guardados`,'ok');document.getElementById('aiResult').style.display='none';await cargarTodo();}catch(e){toast('❌ '+e.message,'err');}
 }
 
 // CONFIG
-function initCfg(){
-  SU=localStorage.getItem('violeta_supa_url')||_DEFAULT_SU;
-  SK=localStorage.getItem('violeta_supa_key')||_DEFAULT_SK;
-  const el_url=document.getElementById('cfgUrl');
-  const el_key=document.getElementById('cfgKey');
-  if(el_url) el_url.value=SU;
-  if(el_key) el_key.value=SK;
-}
-
-function guardarConfig(){
-  const url=document.getElementById('cfgUrl').value.trim();const key=document.getElementById('cfgKey').value.trim();
-  if(!url||!key){toast('Completá URL y Key','err');return;}
-  localStorage.setItem('violeta_supa_url',url);localStorage.setItem('violeta_supa_key',key);
-  SU=url;SK=key;document.getElementById('cfgSt').textContent='✅ Guardado correctamente';toast('✅ Configuración guardada','ok');cargarTodo();
-}
-function copiarSQL(){navigator.clipboard.writeText(document.getElementById('sqlCode').textContent).then(()=>toast('📋 SQL copiado'));}
+function initCfg(){ /* credentials fixed in code — no config needed */ }
+function guardarConfig(){ /* disabled */ }
+function copiarSQL(){navigator.clipboard.writeText(document.getElementById('sqlCode')?.textContent||'').then(()=>toast('📋 SQL copiado'));}
 
   // ── IMPORTAR CATÁLOGO DESDE EXCEL ─────────────────────────────────────────
   function actualizarCampanaXls(val){
@@ -772,6 +1074,7 @@ function copiarSQL(){navigator.clipboard.writeText(document.getElementById('sqlC
         const colDetalle = findCol(sample, ['detalle','descripcion_promo','detail','promo_detalle']);
         const colGrupo   = findCol(sample, ['grupo','group','promo_grupo']);
         const colPre2    = findCol(sample, ['precio_promo_2','precio2','promo_2','promo2']);
+        const colPag     = findCol(sample, ['pagina','page','pag']);
         const colCamp    = findCol(sample, ['campana','camp','campaign']);
 
         if(!colCod || !colNom || !colPre){
@@ -798,6 +1101,7 @@ function copiarSQL(){navigator.clipboard.writeText(document.getElementById('sqlC
           const pre2Raw      = colPre2    ? String(row[colPre2]||'').trim()    : '';
           const precio_promo_2 = pre2Raw && !isNaN(parseInt(pre2Raw.replace(/[^0-9]/g,'')))
                                 ? parseInt(pre2Raw.replace(/[^0-9]/g,'')) : null;
+          const pagina       = colPag     ? String(row[colPag]||'').trim() || null : null;
 
           const fila_err = [];
           if(!codigo || !/^\d{4,6}$/.test(codigo)) fila_err.push('código inválido');
@@ -807,7 +1111,7 @@ function copiarSQL(){navigator.clipboard.writeText(document.getElementById('sqlC
 
           xlsDatosValidados.push({ codigo, nombre, precio: isNaN(precio)?null:precio,
             precio_tachado: isNaN(tachado)?null:tachado, promo_tipo:tipo,
-            promo_detalle:detalle, promo_grupo:grupo, precio_promo_2, campana, _err: fila_err });
+            promo_detalle:detalle, promo_grupo:grupo, precio_promo_2, pagina, campana, _err: fila_err });
           if(fila_err.length) errores.push('Fila '+(i+2)+': '+fila_err.join(', '));
         });
 
@@ -856,21 +1160,74 @@ function copiarSQL(){navigator.clipboard.writeText(document.getElementById('sqlC
     const batchSize = 50;
     let ok = 0, err = 0;
     for(let i=0; i<validos.length; i+=batchSize){
-      const batch = validos.slice(i, i+batchSize).map(p=>({
-        codigo:        p.codigo,
-        nombre:        p.nombre,
-        precio:        p.precio,
-        precio_tachado:p.precio_tachado||null,
-        promo_tipo:    p.promo_tipo,
-        promo_detalle: p.promo_detalle||'',
-        promo_grupo:   p.promo_grupo||'',
-        precio_promo_2:p.precio_promo_2||null,
-        campana:       p.campana
-      }));
       try{
-        const res = await sPost('productos', batch);
-        if(res) ok += batch.length; else err += batch.length;
-      }catch(e){ err += batch.length; }
+        // Upsert: si existe (codigo+campana) actualiza, sino crea
+        // Deduplicar dentro del batch — si hay dos filas con mismo codigo+campana
+        // quedarse solo con la última (la más abajo en el Excel)
+        const batchMap = new Map();
+        validos.slice(i, i+batchSize).forEach(p => {
+          const key = (p.codigo||'') + '||' + (p.campana||'');
+          batchMap.set(key, {
+            codigo:        p.codigo,
+            nombre:        p.nombre,
+            precio:        p.precio,
+            precio_tachado:p.precio_tachado||null,
+            promo_tipo:    p.promo_tipo,
+            promo_detalle: p.promo_detalle||'',
+            promo_grupo:   p.promo_grupo||'',
+            precio_promo_2:p.precio_promo_2||null,
+            pagina:        p.pagina||null,
+            campana:       p.campana
+          });
+        });
+        const batch = [...batchMap.values()];
+
+        // Upsert por (codigo, campana) — usa el constraint exacto de la BD
+        const res = await fetch(`${SU}/rest/v1/productos?on_conflict=codigo,campana`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SK,
+            'Authorization': 'Bearer ' + SK,
+            'Prefer': 'resolution=merge-duplicates,return=minimal'
+          },
+          body: JSON.stringify(batch)
+        });
+        if(res.ok){
+          ok += batch.length;
+        } else {
+          err += batch.length;
+          const errBody = await res.text();
+          let errParsed = {};
+          try{ errParsed = JSON.parse(errBody); }catch(ex){}
+          const code    = errParsed.code || '';
+          const message = errParsed.message || errBody;
+          console.error('Error batch:', errBody);
+          // Errores específicos con mensaje claro
+          if(code === '23505' || message.includes('duplicate') || message.includes('unique')){
+            txt.textContent = '⚠️ Código duplicado — falta constraint. Ejecutá upsert_constraint_v2.sql en Supabase';
+            toast('⚠️ Ejecutá upsert_constraint_v2.sql en Supabase para habilitar el upsert','err');
+            break;
+          } else if(code === '23502' || message.includes('not-null') || message.includes('null value')){
+            txt.textContent = '⚠️ Falta un campo obligatorio en el Excel (código o nombre vacío en alguna fila)';
+            toast('⚠️ Revisá que todas las filas tengan código y nombre','err');
+            break;
+          } else if(code === 'PGRST204'){
+            txt.textContent = '⚠️ Columna no existe en la BD — ejecutá los SQL de migración';
+            toast('⚠️ Columna inexistente — revisá el schema de la BD','err');
+            break;
+          } else if(res.status === 401 || message.includes('JWT')){
+            txt.textContent = '⚠️ Sin permisos — verificá la anon key de Supabase';
+            break;
+          } else {
+            txt.textContent = `⚠️ Error en lote (HTTP ${res.status}): ${message.substring(0,120)}`;
+          }
+        }
+      }catch(e){
+        err += batch.length;
+        txt.textContent = '❌ Error de red: ' + e.message;
+        console.error(e);
+      }
       const pct = Math.round((i+batchSize)/validos.length*100);
       bar.style.width = Math.min(pct,100)+'%';
       txt.textContent = `Guardando... ${Math.min(i+batchSize,validos.length)} de ${validos.length}`;
@@ -884,16 +1241,51 @@ function copiarSQL(){navigator.clipboard.writeText(document.getElementById('sqlC
     if(typeof renderCatalogo === 'function') renderCatalogo();
   }
 
+  async function descargarCatalogoDesdeDB(){
+    if(typeof XLSX === 'undefined'){ toast('❌ Librería XLSX no cargada'); return; }
+    toast('⏳ Descargando catálogo...');
+    try{
+      // Traer todos los productos (limit alto para traer todo)
+      const prods = await sGet('productos', 'order=campana.asc,nombre.asc&limit=2000&select=codigo,nombre,precio,precio_tachado,promo_tipo,promo_detalle,promo_grupo,precio_promo_2,pagina,campana');
+      if(!prods.length){ toast('⚠️ No hay productos en la base'); return; }
+
+      const COLS = ['codigo','nombre','precio','precio_tachado','promo_tipo','promo_detalle','promo_grupo','precio_promo_2','pagina','campana'];
+      const wsData = [COLS];
+      prods.forEach(p => {
+        wsData.push(COLS.map(c => p[c] ?? ''));
+      });
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      ws['!cols'] = [{wch:10},{wch:60},{wch:12},{wch:15},{wch:18},{wch:50},{wch:22},{wch:14},{wch:10},{wch:10}];
+
+      // Forzar codigo como texto
+      prods.forEach((_, i) => {
+        const cell = ws[XLSX.utils.encode_cell({r:i+1, c:0})];
+        if(cell){ cell.t='s'; cell.z='@'; }
+      });
+
+      // Nombre de hoja según campaña del primer producto
+      const camp = (prods[0]?.campana || 'X-XX').replace('Campaña ','').replace('/','_');
+      XLSX.utils.book_append_sheet(wb, ws, `Productos ${camp}`);
+      const fecha = new Date().toISOString().slice(0,10).replace(/-/g,'');
+      XLSX.writeFile(wb, `catalogo_violetta_${camp}_${fecha}.xlsx`);
+      toast(`✅ ${prods.length} productos descargados`);
+    }catch(e){
+      toast('❌ Error: ' + e.message);
+    }
+  }
+
   function descargarPlantillaXls(){
     // Genera un xlsx vacío con los encabezados correctos
     if(typeof XLSX === 'undefined'){ toast('❌ Librería XLSX no cargada'); return; }
     const wb = XLSX.utils.book_new();
-    const headers = [['codigo','nombre','precio','precio_tachado','promo_tipo','promo_detalle','promo_grupo','precio_promo_2','campana']];
+    const headers = [['codigo','nombre','precio','precio_tachado','promo_tipo','promo_detalle','promo_grupo','precio_promo_2','pagina','campana']];
     const ws = XLSX.utils.aoa_to_sheet(headers);
     ws['!cols'] = [{wch:10},{wch:60},{wch:12},{wch:15},{wch:18},{wch:50},{wch:22},{wch:14},{wch:10}];
     XLSX.utils.book_append_sheet(wb, ws, 'Productos X-XX');
     const wi = XLSX.utils.aoa_to_sheet([
-      ['FORMATO PARA IMPORTAR CATÁLOGO — VIOLETTA SELLER'],[''],
+      ['FORMATO PARA IMPORTAR CATÁLOGO — MICATALOGAPP'],[''],
       ['Columnas obligatorias:'],
       ['codigo','Código numérico 5-6 dígitos. OBLIGATORIO.'],
       ['nombre','Nombre completo del producto. OBLIGATORIO.'],
@@ -909,12 +1301,390 @@ function copiarSQL(){navigator.clipboard.writeText(document.getElementById('sqlC
     XLSX.writeFile(wb, 'plantilla_catalogo_violetta.xlsx');
   }
 
-  function copyLink(f){navigator.clipboard.writeText(window.location.origin+window.location.pathname.replace('admin.html','')+f).then(()=>toast('📋 Link copiado'));}
+  // ── FOLLETOS — Configuración año y subida GitHub ────────────
+
+  const GH_REPO  = 'charloss2/violetasellers'; // repo donde viven los folletos
+  const GH_BRANCH = 'main';
+
+  // ── EDITOR DE HOTSPOTS ───────────────────────────────────────
+  let _hsPdfDoc = null, _hsPagina = 1, _hsTotalPags = 0;
+  let _hsCampana = '', _hsPendingX = 0, _hsPendingY = 0;
+  let _hsSelCodigo = '', _hsSelNombre = '';
+  let _hsHotspots = [];
+
+  async function iniciarEditorHotspots(){
+    const camp = document.getElementById('hs-campana').value.trim();
+    if(!camp){ toast('⚠️ Ingresá la campaña (ej: 6/26)','err'); return; }
+    _hsCampana = camp;
+    const num = camp.split('/')[0].replace(/^0/,'');
+    const año  = localStorage.getItem('mca_año')||'26';
+    const pdfUrl = `./folleto_c${num}${año}.pdf`;
+    toast('⏳ Cargando folleto...');
+    try{
+      if(!window.pdfjsLib){
+        await new Promise((res,rej)=>{
+          const s=document.createElement('script');
+          s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+          s.onload=()=>{
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc=
+              'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            res();
+          };
+          s.onerror=rej; document.head.appendChild(s);
+        });
+      }
+      _hsPdfDoc = await pdfjsLib.getDocument(pdfUrl).promise;
+      _hsTotalPags = _hsPdfDoc.numPages;
+      _hsPagina = 1;
+      document.getElementById('hs-editor-wrap').style.display='block';
+      await cargarHotspotsExistentes();
+      await hsRenderPagina(1);
+      toast(`✅ Folleto cargado — ${_hsTotalPags} páginas`);
+    }catch(e){ toast('❌ No se pudo cargar el folleto','err'); console.error(e); }
+  }
+
+  async function hsRenderPagina(num){
+    if(!_hsPdfDoc) return;
+    _hsPagina = Math.max(1, Math.min(num, _hsTotalPags));
+    document.getElementById('hs-pag-label').textContent = `Página ${_hsPagina} / ${_hsTotalPags}`;
+    const page = await _hsPdfDoc.getPage(_hsPagina);
+    const canvas = document.getElementById('hs-canvas');
+    const maxW = (canvas.parentElement.parentElement.clientWidth - 40) || 600;
+    const vp0  = page.getViewport({scale:1});
+    const scale = Math.min(maxW/vp0.width, 1.4);
+    const vp   = page.getViewport({scale});
+    canvas.width = vp.width; canvas.height = vp.height;
+    await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
+    hsRenderDots();
+  }
+
+  function hsRenderDots(){
+    const dots = document.getElementById('hs-dots');
+    if(!dots) return;
+    const pagHs = _hsHotspots.filter(hs=>hs.pagina===_hsPagina && hs.campana===_hsCampana);
+    dots.innerHTML = pagHs.map(hs=>`
+      <div style="position:absolute;left:calc(${hs.pos_x}% - 18px);top:calc(${hs.pos_y}% - 18px);
+        width:36px;height:36px;background:rgba(124,58,237,.85);border:3px solid white;
+        border-radius:50%;display:flex;align-items:center;justify-content:center;
+        font-size:13px;font-weight:900;color:white;box-shadow:0 2px 8px rgba(0,0,0,.4);
+        cursor:pointer;pointer-events:all;" title="${hs.codigo} — ${hs.nombre||''}"
+        onclick="hsEliminarHotspot('${hs.id}')">✕</div>
+      <div style="position:absolute;left:${hs.pos_x}%;top:calc(${hs.pos_y}% + 20px);
+        transform:translateX(-50%);background:rgba(124,58,237,.9);color:white;
+        font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;
+        white-space:nowrap;pointer-events:none;">${hs.codigo}</div>`).join('');
+  }
+
+  function hsClick(e){
+    const rect = document.getElementById('hs-overlay').getBoundingClientRect();
+    _hsPendingX = ((e.clientX-rect.left)/rect.width)*100;
+    _hsPendingY = ((e.clientY-rect.top)/rect.height)*100;
+    _hsSelCodigo=''; _hsSelNombre='';
+    document.getElementById('hs-buscar').value='';
+    document.getElementById('hs-resultados').innerHTML='';
+    document.getElementById('hs-seleccionado').style.display='none';
+    document.getElementById('hs-confirmar').disabled=true;
+    document.getElementById('hs-modal').style.display='flex';
+    setTimeout(()=>document.getElementById('hs-buscar').focus(),100);
+  }
+
+  function hsBuscarProducto(q){
+    if(!q.trim()){ document.getElementById('hs-resultados').innerHTML=''; return; }
+    const hits = allProds.filter(p=>
+      (!_hsCampana||p.campana===_hsCampana||!p.campana)&&
+      (p.nombre.toLowerCase().includes(q.toLowerCase())||String(p.codigo).includes(q))
+    ).slice(0,12);
+    document.getElementById('hs-resultados').innerHTML = hits.map(p=>`
+      <div onclick="hsSeleccionar('${p.codigo}','${encodeURIComponent(p.nombre)}')"
+        style="padding:8px 12px;border:1.5px solid #e9d5ff;border-radius:8px;cursor:pointer;
+        font-size:13px;background:white;transition:background .15s;"
+        onmouseover="this.style.background='#f5f0ff'" onmouseout="this.style.background='white'">
+        <strong style="color:#7c3aed;">${p.codigo}</strong> — ${p.nombre}
+      </div>`).join('')||'<div style="padding:12px;color:#9ca3af;font-size:13px;">Sin resultados</div>';
+  }
+
+  function hsSeleccionar(codigo,nombreEnc){
+    _hsSelCodigo=codigo; _hsSelNombre=decodeURIComponent(nombreEnc);
+    document.getElementById('hs-sel-texto').textContent=`${codigo} — ${_hsSelNombre}`;
+    document.getElementById('hs-seleccionado').style.display='block';
+    document.getElementById('hs-confirmar').disabled=false;
+    document.getElementById('hs-resultados').innerHTML='';
+    document.getElementById('hs-buscar').value='';
+  }
+
+  async function hsConfirmarHotspot(){
+    if(!_hsSelCodigo){ toast('⚠️ Seleccioná un producto','err'); return; }
+    const nuevo={campana:_hsCampana,pagina:_hsPagina,
+      pos_x:Math.round(_hsPendingX*100)/100,pos_y:Math.round(_hsPendingY*100)/100,
+      codigo:_hsSelCodigo,nombre:_hsSelNombre};
+    try{
+      const res = await sPost('folleto_hotspots',nuevo);
+      _hsHotspots.push(res[0]||{...nuevo,id:'tmp'+Date.now()});
+      hsRenderDots(); hsCancelarModal();
+      toast(`✅ ${_hsSelCodigo} guardado en página ${_hsPagina}`);
+    }catch(e){ toast('❌ '+e.message,'err'); }
+  }
+
+  function hsCancelarModal(){ document.getElementById('hs-modal').style.display='none'; }
+
+  async function cargarHotspotsExistentes(){
+    const camp = (document.getElementById('hs-campana')?.value||'').trim()||_hsCampana;
+    if(!camp) return;
+    _hsCampana = camp;
+    try{
+      _hsHotspots = await sGet('folleto_hotspots',
+        `campana=eq.${encodeURIComponent(camp)}&select=*&order=pagina.asc`);
+      hsRenderDots();
+      const lista = document.getElementById('hs-lista');
+      if(!lista) return;
+      if(!_hsHotspots.length){ lista.innerHTML='<p style="font-size:13px;color:#9ca3af;">Sin hotspots para esta campaña.</p>'; return; }
+      const porPag={};
+      _hsHotspots.forEach(hs=>(porPag[hs.pagina]||(porPag[hs.pagina]=[])).push(hs));
+      lista.innerHTML=`<div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px;">
+        📍 ${_hsHotspots.length} hotspots — Campaña ${camp}</div>`
+        +Object.entries(porPag).map(([pag,hss])=>`
+          <div style="margin-bottom:8px;">
+            <div style="font-size:12px;font-weight:700;color:#6b7280;margin-bottom:4px;">Página ${pag}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">${hss.map(hs=>`
+              <span style="background:#f5f0ff;border:1.5px solid #e9d5ff;border-radius:8px;
+                padding:3px 8px;font-size:12px;display:inline-flex;align-items:center;gap:6px;">
+                <strong style="color:#7c3aed;">${hs.codigo}</strong>
+                <span style="color:#6b7280;">${(hs.nombre||'').substring(0,20)}</span>
+                <button onclick="hsEliminarHotspot('${hs.id}')"
+                  style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:14px;padding:0;">✕</button>
+              </span>`).join('')}</div></div>`).join('');
+      toast(`✅ ${_hsHotspots.length} hotspots cargados`);
+    }catch(e){ toast('❌ '+e.message,'err'); }
+  }
+
+  async function hsEliminarHotspot(id){
+    if(!confirm('¿Eliminar este hotspot?')) return;
+    try{
+      await sDel('folleto_hotspots',id);
+      _hsHotspots=_hsHotspots.filter(hs=>hs.id!==id);
+      hsRenderDots(); await cargarHotspotsExistentes();
+      toast('✅ Eliminado');
+    }catch(e){ toast('❌ '+e.message,'err'); }
+  }
+
+  async function borrarHotspotsCampana(){
+    const camp=(document.getElementById('hs-campana')?.value||'').trim();
+    if(!camp){ toast('⚠️ Ingresá la campaña','err'); return; }
+    const n=_hsHotspots.filter(h=>h.campana===camp).length;
+    if(!confirm(`¿Borrar TODOS los hotspots de "${camp}"? (${n} posiciones)`)) return;
+    try{
+      await fetch(`${SU}/rest/v1/folleto_hotspots?campana=eq.${encodeURIComponent(camp)}`,
+        {method:'DELETE',headers:{...H(),'Prefer':'return=minimal'}});
+      _hsHotspots=_hsHotspots.filter(h=>h.campana!==camp);
+      hsRenderDots();
+      document.getElementById('hs-lista').innerHTML='';
+      toast('✅ Todos los hotspots eliminados');
+    }catch(e){ toast('❌ '+e.message,'err'); }
+  }
+
+  function hsPagAnterior(){ if(_hsPagina>1) hsRenderPagina(_hsPagina-1); }
+  function hsPageSiguiente(){ if(_hsPagina<_hsTotalPags) hsRenderPagina(_hsPagina+1); }
+
+  function initFolletos(){
+    // Cargar año guardado
+    const año = localStorage.getItem('mca_año') || '26';
+    const inp = document.getElementById('cfgAño');
+    if(inp) inp.value = año;
+    // Cargar token guardado
+    const tok = localStorage.getItem('mca_gh_token');
+    const tokInp = document.getElementById('ghToken');
+    if(tokInp && tok) { tokInp.value = tok; document.getElementById('ghTokenSt').textContent = '✅ Token guardado'; }
+  }
+
+  function guardarAño(){
+    const val = (document.getElementById('cfgAño')?.value || '').trim();
+    if(!val || val.length !== 2 || isNaN(val)){
+      toast('⚠️ Ingresá 2 dígitos (ej: 26 para 2026)','err'); return;
+    }
+    localStorage.setItem('mca_año', val);
+    document.getElementById('año-estado').textContent = `✅ Año ${val} guardado`;
+    toast(`✅ Año configurado: 20${val}`,'ok');
+  }
+
+  function guardarToken(){
+    const tok = document.getElementById('ghToken')?.value.trim();
+    if(!tok){ toast('⚠️ Ingresá el token','err'); return; }
+    localStorage.setItem('mca_gh_token', tok);
+    document.getElementById('ghTokenSt').textContent = '✅ Token guardado';
+    toast('✅ Token guardado localmente','ok');
+  }
+
+  async function verificarToken(){
+    const tok = localStorage.getItem('mca_gh_token') || document.getElementById('ghToken')?.value.trim();
+    if(!tok){ toast('⚠️ Guardá el token primero','err'); return; }
+    try{
+      const r = await fetch(`https://api.github.com/repos/${GH_REPO}`, {
+        headers: { 'Authorization': `Bearer ${tok}`, 'Accept': 'application/vnd.github+json' }
+      });
+      if(r.ok){
+        const d = await r.json();
+        toast(`✅ Acceso OK — repo: ${d.full_name}`,'ok');
+        document.getElementById('ghTokenSt').textContent = `✅ Acceso verificado a ${d.full_name}`;
+      } else {
+        toast(`❌ Sin acceso (${r.status}) — verificá el token`,'err');
+        document.getElementById('ghTokenSt').textContent = `❌ Error ${r.status}`;
+      }
+    }catch(e){ toast('❌ Error de red: '+e.message,'err'); }
+  }
+
+  function previewFolleto(input){
+    const f = input.files[0];
+    const prev = document.getElementById('follPreview');
+    if(!f){ prev.textContent=''; return; }
+    const mb = (f.size/1024/1024).toFixed(1);
+    prev.innerHTML = `📄 <strong>${f.name}</strong> — ${mb} MB`;
+    // Autocompletar número de campaña desde el nombre del archivo si puede
+    const m = f.name.match(/c(\d{1,2})\d{2}|camp.*?(\d{1,2})|(\d{1,2})/i);
+    if(m){
+      const num = m[1]||m[2]||m[3];
+      if(num && num < 99) document.getElementById('follCamp').value = parseInt(num);
+    }
+  }
+
+  async function subirFolleto(){
+    const tok  = localStorage.getItem('mca_gh_token') || document.getElementById('ghToken')?.value.trim();
+    const camp = document.getElementById('follCamp')?.value.trim();
+    const file = document.getElementById('follFile')?.files[0];
+    const año  = localStorage.getItem('mca_año') || '26';
+
+    if(!tok){ toast('⚠️ Configurá el GitHub token primero','err'); return; }
+    if(!camp){ toast('⚠️ Ingresá el número de campaña','err'); return; }
+    if(!file){ toast('⚠️ Seleccioná el archivo PDF','err'); return; }
+    if(!file.name.endsWith('.pdf')){ toast('⚠️ El archivo debe ser PDF','err'); return; }
+
+    const mb = file.size/1024/1024;
+    if(mb > 25){ toast(`❌ El PDF es muy grande (${mb.toFixed(1)}MB). Máximo 25MB.`,'err'); return; }
+
+    const campPad = String(camp).padStart(2,'0');
+    const fileName = `folleto_c${campPad}${año}.pdf`;
+    const path = fileName;
+
+    const prog = document.getElementById('follProgreso');
+    const bar  = document.getElementById('follBar');
+    const txt  = document.getElementById('follTxt');
+    prog.style.display = 'block';
+    bar.style.width = '20%';
+    txt.textContent = `Leyendo ${fileName}...`;
+
+    try{
+      // Leer el archivo como base64
+      const base64 = await new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onload = e => res(e.target.result.split(',')[1]);
+        reader.onerror = rej;
+        reader.readAsDataURL(file);
+      });
+
+      bar.style.width = '50%';
+      txt.textContent = `Verificando si ya existe ${fileName}...`;
+
+      // Verificar si ya existe para obtener el SHA (necesario para actualizar)
+      let sha = null;
+      const checkR = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}`, {
+        headers: { 'Authorization': `Bearer ${tok}`, 'Accept': 'application/vnd.github+json' }
+      });
+      if(checkR.ok){
+        const existing = await checkR.json();
+        sha = existing.sha;
+        txt.textContent = `Actualizando ${fileName} en el repo...`;
+      } else {
+        txt.textContent = `Subiendo ${fileName} por primera vez...`;
+      }
+
+      bar.style.width = '75%';
+
+      // Subir via GitHub API
+      const body = {
+        message: `📄 Folleto campaña ${camp}/${año} — subido desde MiCatalogApp admin`,
+        content: base64,
+        branch: GH_BRANCH,
+      };
+      if(sha) body.sha = sha;
+
+      const upR = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${tok}`,
+          'Accept': 'application/vnd.github+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body)
+      });
+
+      bar.style.width = '100%';
+
+      if(upR.ok){
+        txt.innerHTML = `✅ <strong>${fileName}</strong> subido correctamente al repo. Disponible en 1-2 minutos.`;
+        bar.style.background = 'var(--success)';
+        toast(`✅ ${fileName} subido al repo`,'ok');
+        listarFolletos();
+      } else {
+        const err = await upR.json();
+        txt.textContent = `❌ Error: ${err.message}`;
+        bar.style.background = 'var(--danger)';
+        toast('❌ '+err.message,'err');
+      }
+    }catch(e){
+      txt.textContent = '❌ ' + e.message;
+      bar.style.background = 'var(--danger)';
+      toast('❌ '+e.message,'err');
+    }
+  }
+
+  async function listarFolletos(){
+    const tok = localStorage.getItem('mca_gh_token') || document.getElementById('ghToken')?.value.trim();
+    const lista = document.getElementById('follLista');
+    lista.textContent = '⏳ Cargando...';
+
+    try{
+      // Listar archivos del repo raíz
+      const headers = tok
+        ? { 'Authorization': `Bearer ${tok}`, 'Accept': 'application/vnd.github+json' }
+        : { 'Accept': 'application/vnd.github+json' };
+
+      const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/?ref=${GH_BRANCH}`, { headers });
+      if(!r.ok){ lista.textContent = `❌ Error ${r.status} — verificá el token`; return; }
+      const files = await r.json();
+      const pdfs = files.filter(f => f.name.startsWith('folleto_') && f.name.endsWith('.pdf'));
+
+      if(!pdfs.length){
+        lista.innerHTML = '<em>No hay folletos subidos todavía.</em>';
+        return;
+      }
+
+      lista.innerHTML = pdfs.map(f => {
+        const mb = (f.size/1024/1024).toFixed(1);
+        // Extraer campaña del nombre: folleto_c0726.pdf → campaña 7/26
+        const m = f.name.match(/folleto_c(\d{2})(\d{2})\.pdf/);
+        const campLabel = m ? `Campaña ${parseInt(m[1])}/${m[2]}` : f.name;
+        const url = `https://charloss2.github.io/violetasellers/${f.name}`;
+        return `<div style="display:flex;justify-content:space-between;align-items:center;
+          padding:10px 12px;background:var(--bg);border:1px solid var(--border);
+          border-radius:8px;margin-bottom:6px;flex-wrap:wrap;gap:8px;">
+          <div>
+            <strong style="color:var(--accent);">📄 ${campLabel}</strong>
+            <span style="color:var(--text2);font-size:11px;margin-left:8px;">${f.name} · ${mb}MB</span>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <a href="${url}" target="_blank" class="btn-sm ghost" style="text-decoration:none;">👁️ Ver</a>
+            <button class="btn-sm ghost" onclick="navigator.clipboard.writeText('${url}').then(()=>toast('📋 URL copiada'))">📋</button>
+          </div>
+        </div>`;
+      }).join('');
+    }catch(e){
+      lista.textContent = '❌ ' + e.message;
+    }
+  }
 
 function cerrarModal(id){document.getElementById(id).classList.remove('open');}
 document.addEventListener('click',e=>{if(e.target.classList.contains('modal-bg'))cerrarModal(e.target.id);});
 
-if(localStorage.getItem('va_root')==='1'){
+if(localStorage.getItem('mca_root')==='1'){
   document.getElementById('loginWrap').style.display='none';
   document.getElementById('appWrap').style.display='block';
   initCfg();cargarTodo();
@@ -937,7 +1707,7 @@ function imprimirReporteAdmin(){
     camps[c].pedidos++;
     if(p.total)camps[c].total+=Number(p.total);
     if(p.estado==='cobrado'&&p.total)camps[c].cobrado+=Number(p.total);
-    if(p.nombre)camps[c].clientes.add(p.nombre);
+    if(p.nombre_cliente||p.nombre)camps[c].clientes.add(p.nombre_cliente||p.nombre);
   });
   const campRows=Object.keys(camps).sort().map(c=>`
     <tr><td>${c}</td><td class="center">${camps[c].pedidos}</td>
@@ -961,7 +1731,7 @@ function imprimirReporteAdmin(){
     <td class="right bold green">${d.total?'$'+d.total.toLocaleString('es-AR'):'—'}</td></tr>`).join('');
 
   const html=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
-<title>Reporte Admin — Violetta Seller</title>
+<title>Reporte Admin — MiCatalogApp</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
   *{margin:0;padding:0;box-sizing:border-box;}
@@ -985,7 +1755,7 @@ function imprimirReporteAdmin(){
 </head><body>
 <div class="header">
   <div>
-    <div class="logo">♦ Violetta Seller<span>.</span></div>
+    <div class="logo">♦ MiCatalogApp<span>.</span></div>
     <div style="margin-top:6px;font-size:13px;color:#6b21a8;">Panel Administrador</div>
   </div>
   <div style="text-align:right;font-size:13px;color:#6b21a8;">
@@ -1013,7 +1783,7 @@ function imprimirReporteAdmin(){
   <tbody>${vendRows}</tbody>
 </table>
 
-<div class="footer">Reporte generado por el sistema de pedidos de <strong>Violetta Seller</strong> · ${fecha}</div>
+<div class="footer">Reporte generado por el sistema de pedidos de <strong>MiCatalogApp</strong> · ${fecha}</div>
 <br>
 <div style="text-align:center;">
   <button onclick="window.print()" style="background:#7c3aed;color:white;border:none;padding:12px 32px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">🖨️ Imprimir / Guardar PDF</button>
@@ -1021,7 +1791,7 @@ function imprimirReporteAdmin(){
 </div>
 </body><!--
 ================================================================================
-  CHANGELOG — Violetta Seller
+  CHANGELOG — MiCatalogApp
   © 2026 Carlos Caceres — Proyecto Alpha v1.0.0
 ================================================================================
 
@@ -1117,7 +1887,7 @@ function buildAdminProveedor(){
         qty:       it.qty||1,
         precio:    it.precio||0,
         subtotal:  it.subtotal||(it.precio*(it.qty||1))||0,
-        cliente:   p.nombre||'—',
+        cliente: p.nombre_cliente||p.nombre||'—',
         vendedora: p.vendedora_username||'—',
         campana:   p.campana||'—',
         fecha:     p.fecha||p.created_at||'—',
@@ -1233,6 +2003,47 @@ function actualizarResumenAdmin(){
     Total: <strong style="color:var(--accent);">$${totalSel.toLocaleString('es-AR')}</strong>`;
 }
 
+function exportarExcelAdminProveedor(){
+  if(typeof XLSX === 'undefined'){ toast('❌ Recargá la página (falta XLSX)','err'); return; }
+  const sel = apRows.filter(r => r.selected);
+  if(!sel.length){ toast('⚠️ Seleccioná al menos un ítem','err'); return; }
+
+  // Agrupar por SKU sumando cantidades
+  const agrup = {};
+  sel.forEach(r => {
+    const sku = String(r.codigo || r.sku || '').trim();
+    if(!sku) return;
+    if(!agrup[sku]) agrup[sku] = { sku, qty: 0 };
+    agrup[sku].qty += parseInt(r.qty) || 1;
+  });
+
+  const rows = Object.values(agrup);
+  if(!rows.length){ toast('⚠️ Ningún ítem tiene código SKU — verificá el catálogo','err'); return; }
+
+  // Encabezados exactos que requiere la web de Violetta
+  const wsData = [['Nro', 'Quantidade', 'Quantidade']];
+  rows.forEach((r, i) => wsData.push([i + 1, r.sku, r.qty]));
+
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Forzar SKU como texto (col B)
+  rows.forEach((_, i) => {
+    const cell = ws[XLSX.utils.encode_cell({r: i+1, c: 1})];
+    if(cell){ cell.t = 's'; cell.z = '@'; }
+  });
+  ws['!cols'] = [{wch:6},{wch:14},{wch:12}];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'ItensPedido');
+
+  const camp = (document.getElementById('apFiltCamp')?.value || 'pedido').replace(/\//g,'-');
+  const fecha = new Date().toISOString().slice(0,10).replace(/-/g,'');
+  XLSX.writeFile(wb, `pedido_violetta_global_${camp}_${fecha}.xlsx`);
+
+  const totalUni = rows.reduce((s,r) => s + r.qty, 0);
+  toast(`✅ ${rows.length} productos · ${totalUni} unidades`);
+}
+
 function imprimirAdminProveedor(){
   const sel=apRows.filter(r=>r.selected);
   if(!sel.length){toast('⚠️ Seleccioná al menos un ítem','err');return;}
@@ -1287,7 +2098,7 @@ function imprimirAdminProveedor(){
 </head><body>
 <div class="header">
   <div>
-    <div class="logo">♦ Violetta Seller<span>.</span></div>
+    <div class="logo">♦ MiCatalogApp<span>.</span></div>
     <div style="margin-top:6px;font-size:13px;font-weight:700;">Panel Administrador</div>
   </div>
   <div style="text-align:right;font-size:13px;color:#6b21a8;">
@@ -1307,7 +2118,7 @@ function imprimirAdminProveedor(){
   </tr></thead>
   <tbody>${rowsHtml}</tbody>
 </table>
-<div class="footer">Reporte generado por el sistema de pedidos de <strong>Violetta Seller</strong> · ${fecha}</div>
+<div class="footer">Reporte generado por el sistema de pedidos de <strong>MiCatalogApp</strong> · ${fecha}</div>
 <br>
 <div style="text-align:center;">
   <button onclick="window.print()" style="background:#7c3aed;color:white;border:none;padding:12px 32px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">🖨️ Imprimir / Guardar PDF</button>
@@ -1315,7 +2126,7 @@ function imprimirAdminProveedor(){
 </div>
 </body><!--
 ================================================================================
-  CHANGELOG — Violetta Seller
+  CHANGELOG — MiCatalogApp
   © 2026 Carlos Caceres — Proyecto Alpha v1.0.0
 ================================================================================
 
@@ -1369,7 +2180,7 @@ function imprimirAdminProveedor(){
 </body>
 <!--
 ================================================================================
-  CHANGELOG — Violetta Seller
+  CHANGELOG — MiCatalogApp
   © 2026 Carlos Caceres — Proyecto Alpha v1.0.0
 ================================================================================
 
