@@ -164,6 +164,8 @@
     /* Barra de navegación páginas */
     .folleto-nav {
       flex-shrink: 0;
+      position: relative;
+      z-index: 150;
       display: flex; align-items: center; justify-content: space-between;
       padding: 6px 12px; gap: 8px; background: rgba(0,0,0,.3);
     }
@@ -359,7 +361,7 @@
     .finalizar-bar {
       position: fixed; bottom: 0; left: 0; right: 0;
       background: white; border-top: 1px solid var(--border);
-      padding: 10px 14px; z-index: 300;
+      padding: 10px 14px; z-index: 100; /* Menor que header(200) pero encima del contenido */
       box-shadow: 0 -4px 20px rgba(124,58,237,.10);
     }
     .btn-finalizar {
@@ -1607,6 +1609,34 @@
   localStorage.removeItem('micatalog_cliente_v2');
 
   initToggleMobile();
+
+
+  // ── SWIPE DE PÁGINA EN MOBILE ─────────────────────────────
+  (function(){
+    let swipeStartX = 0, swipeStartY = 0, swipeLocked = false;
+    const scroll = document.getElementById('folleto-scroll');
+    if(!scroll) return;
+
+    scroll.addEventListener('touchstart', function(e){
+      if(e.touches.length !== 1) return;
+      swipeStartX = e.touches[0].clientX;
+      swipeStartY = e.touches[0].clientY;
+      swipeLocked = false;
+    }, {passive:true});
+
+    scroll.addEventListener('touchend', function(e){
+      if(swipeLocked) return;
+      const dx = e.changedTouches[0].clientX - swipeStartX;
+      const dy = e.changedTouches[0].clientY - swipeStartY;
+      // Solo procesar si el movimiento horizontal supera al vertical (swipe lateral)
+      if(Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+      if(dx < 0){
+        cambiarPagina(1);  // swipe izquierda → página siguiente
+      } else {
+        cambiarPagina(-1); // swipe derecha  → página anterior
+      }
+    }, {passive:true});
+  })();
 
   document.addEventListener('keypress', e => {
     if(e.key === 'Enter' && document.getElementById('scr-login').classList.contains('active')) loginDNI();

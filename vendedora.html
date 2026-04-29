@@ -938,6 +938,12 @@
         <!-- EDITOR DE PRECIOS -->
         <div class="precio-panel" id="precio-panel-${p.id}">
           <h4>💰 Precio por ítem${p.campana?' — '+p.campana:''}</h4>
+          <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+            <button class="btn-sm primary" onclick="agregarItemAlPedido('${p.id}')"
+              style="font-size:12px;gap:4px;display:inline-flex;align-items:center;">
+              ➕ Agregar producto
+            </button>
+          </div>
           <div id="items-lista-${p.id}"></div>
           <div class="total-calculado">
             <span>Total del pedido:</span>
@@ -953,6 +959,7 @@
           <button class="btn-sm ${p.estado==='cobrado'?'success':'outline'}" onclick="cambiarEstado('${p.id}','cobrado')" ${p.estado==='cobrado'?'disabled':''}>💰 Cobrado</button>
           <button class="btn-sm ${p.estado==='cancelado'?'danger':'outline'}" onclick="cambiarEstado('${p.id}','cancelado')" ${p.estado==='cancelado'?'disabled':''}>❌ Cancelar</button>
           <button class="btn-sm primary" onclick="togglePrecioPanel('${p.id}')">✏️ Precios</button>
+          <button class="btn-sm ghost" onclick="editarDatosCliente('${p.id}')" title="Editar datos del cliente">👤 Editar</button>
           ${p.total?`<button class="btn-sm outline" onclick="imprimirPedidoDesdeCard('${p.id}')">🖨️ Imprimir</button>`:''}
           ${p.telefono?`<a class="btn-sm wa" href="https://wa.me/${p.telefono.replace(/\D/g,'')}" target="_blank">💬 WhatsApp</a>`:''}
         </div>
@@ -1486,11 +1493,210 @@
             <span style="font-size:9px;color:#16a34a;font-weight:700;text-transform:uppercase;">PRECIO FINAL</span>
             <span class="item-precio-final" id="pf_${pedidoId}_${i}" style="font-size:15px;font-weight:800;color:#15803d;">${precioFinalStr}</span>
           </div>
+          <button onclick="eliminarItemDePedido('${pedidoId}',${i})"
+            style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;
+            padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;
+            font-family:inherit;width:100%;margin-top:2px;">✕ Quitar</button>
         </div>
       </div>`;
     }).join('');
 
     recalcularTotal(pedidoId);
+  }
+
+  // ── ELIMINAR ÍTEM DEL PEDIDO ─────────────────────────────────
+  function eliminarItemDePedido(pedidoId, idx){
+    const ped = misPedidos.find(p=>p.id===pedidoId);
+    if(!ped) return;
+    const items = (ped.productos||'').split(/[|\n]/).map(s=>s.trim()).filter(Boolean);
+    if(!confirm(`¿Eliminar "${items[idx]||'este producto'}" del pedido?`)) return;
+    items.splice(idx, 1);
+    ped.productos = items.join('\n');
+    // También limpiar items_precio guardados para ese índice
+    let precios = [];
+    try{ precios = JSON.parse(ped.items_precio||'[]'); }catch(e){}
+    precios.splice(idx, 1);
+    ped.items_precio = JSON.stringify(precios);
+    // Actualizar en Supabase
+    sPatch('pedidos', `id=eq.${pedidoId}`, {productos: ped.productos, items_precio: ped.items_precio})
+      .then(()=>{ toast('✅ Producto eliminado'); togglePrecioPanel(pedidoId); togglePrecioPanel(pedidoId); })
+      .catch(e=>toast('❌ '+e.message));
+  }
+
+  // ── AGREGAR ÍTEM AL PEDIDO ───────────────────────────────────
+  function agregarItemAlPedido(pedidoId){
+    const ped = misPedidos.find(p=>p.id===pedidoId);
+    if(!ped) return;
+
+    // Buscar campana del pedido para filtrar catálogo
+    const campPed = ped.campana||'';
+    const prods = allProductos.filter(p=>!campPed||p.campana===campPed||!p.campana);
+
+    // Modal de búsqueda
+    const ya = document.getElementById('agregarItemModal');
+    if(ya) ya.remove();
+    const modal = document.createElement('div');
+    modal.id = 'agregarItemModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:flex-end;justify-content:center;';
+    modal.innerHTML = `
+      <div style="background:white;border-radius:24px 24px 0 0;padding:24px 20px 32px;
+        width:100%;max-width:520px;max-height:80vh;display:flex;flex-direction:column;
+        box-shadow:0 -8px 40px rgba(0,0,0,.25);animation:slideUp .25s ease;">
+        <div style="width:44px;height:5px;background:#e5e7eb;border-radius:999px;margin:0 auto 16px;"></div>
+        <div style="font-size:16px;font-weight:800;color:#7c3aed;margin-bottom:12px;">➕ Agregar producto al pedido</div>
+        <input type="text" id="agregar-buscar-input" placeholder="Buscá por nombre o código..."
+          oninput="filtrarAgregarItems(this.value,'${pedidoId}')"
+          style="width:100%;padding:12px 14px;border:2px solid #e9d5ff;border-radius:12px;
+          font-size:14px;font-family:inherit;margin-bottom:12px;outline:none;">
+        <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
+          <label style="font-size:12px;color:#6b7280;">Cantidad:</label>
+          <input type="number" id="agregar-qty" value="1" min="1" max="99"
+            style="width:60px;border:2px solid #e9d5ff;border-radius:8px;padding:6px;
+            font-size:14px;font-family:inherit;text-align:center;">
+        </div>
+        <div id="agregar-lista" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
+          ${prods.slice(0,20).map(p=>`
+            <div onclick="confirmarAgregarItem('${pedidoId}','${p.codigo}','${encodeURIComponent(p.nombre)}')"
+              style="padding:10px 12px;border:1.5px solid #e9d5ff;border-radius:10px;cursor:pointer;
+              transition:background .15s;font-size:13px;"
+              onmouseover="this.style.background='#f5f0ff'" onmouseout="this.style.background='white'">
+              <strong style="color:#7c3aed;">${p.codigo}</strong> — ${p.nombre}
+            </div>`).join('')}
+        </div>
+        <button onclick="document.getElementById('agregarItemModal').remove()"
+          style="margin-top:14px;width:100%;padding:12px;background:#f3f4f6;color:#6b7280;
+          border:none;border-radius:12px;font-size:14px;cursor:pointer;font-family:inherit;">
+          Cancelar
+        </button>
+      </div>`;
+    modal.addEventListener('click', e=>{ if(e.target===modal) modal.remove(); });
+    document.body.appendChild(modal);
+    document.getElementById('agregar-buscar-input').focus();
+    // Guardar productos para filtrar
+    modal._prods = prods;
+    modal._pedidoId = pedidoId;
+  }
+
+  function filtrarAgregarItems(q, pedidoId){
+    const modal = document.getElementById('agregarItemModal');
+    if(!modal) return;
+    const prods = modal._prods || allProductos;
+    const qL = q.toLowerCase().trim();
+    const hits = qL
+      ? prods.filter(p=>p.nombre.toLowerCase().includes(qL)||String(p.codigo).includes(qL)).slice(0,20)
+      : prods.slice(0,20);
+    document.getElementById('agregar-lista').innerHTML = hits.map(p=>`
+      <div onclick="confirmarAgregarItem('${pedidoId}','${p.codigo}','${encodeURIComponent(p.nombre)}')"
+        style="padding:10px 12px;border:1.5px solid #e9d5ff;border-radius:10px;cursor:pointer;
+        font-size:13px;transition:background .15s;"
+        onmouseover="this.style.background='#f5f0ff'" onmouseout="this.style.background='white'">
+        <strong style="color:#7c3aed;">${p.codigo}</strong> — ${p.nombre}
+      </div>`).join('') || '<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px;">Sin resultados</div>';
+  }
+
+  function confirmarAgregarItem(pedidoId, codigo, nombreEnc){
+    const nombre = decodeURIComponent(nombreEnc);
+    const qty = parseInt(document.getElementById('agregar-qty')?.value||'1') || 1;
+    const ped = misPedidos.find(p=>p.id===pedidoId);
+    if(!ped) return;
+    const nuevaLinea = `${qty}x ${codigo} ${nombre}`;
+    ped.productos = (ped.productos||'').trim() + '\n' + nuevaLinea;
+    sDel; // no borrar, solo dummy ref
+    sPatch('pedidos', `id=eq.${pedidoId}`, {productos: ped.productos})
+      .then(()=>{
+        toast(`✅ ${nombre} agregado`);
+        document.getElementById('agregarItemModal')?.remove();
+        // Reabrir el panel para ver el ítem nuevo
+        document.querySelectorAll('.precio-panel.open').forEach(p=>p.classList.remove('open'));
+        togglePrecioPanel(pedidoId);
+      })
+      .catch(e=>toast('❌ '+e.message));
+  }
+
+  // ── EDITAR DATOS DEL CLIENTE DESDE PEDIDO ───────────────────
+  function editarDatosCliente(pedidoId){
+    const ped = misPedidos.find(p=>p.id===pedidoId);
+    if(!ped) return;
+
+    const ya = document.getElementById('editClienteModal');
+    if(ya) ya.remove();
+    const modal = document.createElement('div');
+    modal.id = 'editClienteModal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:flex-end;justify-content:center;';
+    modal.innerHTML = `
+      <div style="background:white;border-radius:24px 24px 0 0;padding:24px 20px 32px;
+        width:100%;max-width:520px;box-shadow:0 -8px 40px rgba(0,0,0,.25);animation:slideUp .25s ease;">
+        <div style="width:44px;height:5px;background:#e5e7eb;border-radius:999px;margin:0 auto 16px;"></div>
+        <div style="font-size:16px;font-weight:800;color:#7c3aed;margin-bottom:16px;">✏️ Editar datos del cliente</div>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px;">
+          <div>
+            <label style="font-size:12px;font-weight:700;color:#7c3aed;display:block;margin-bottom:4px;">Nombre</label>
+            <input id="ec-nombre" type="text" value="${ped._nombre||ped.nombre_cliente||''}"
+              style="width:100%;border:2px solid #e9d5ff;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;">
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:#7c3aed;display:block;margin-bottom:4px;">Teléfono</label>
+            <input id="ec-tel" type="tel" value="${ped.telefono||''}"
+              style="width:100%;border:2px solid #e9d5ff;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;">
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:#7c3aed;display:block;margin-bottom:4px;">Dirección</label>
+            <input id="ec-dir" type="text" value="${ped.direccion||''}"
+              style="width:100%;border:2px solid #e9d5ff;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;">
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:#7c3aed;display:block;margin-bottom:4px;">Forma de pago</label>
+            <select id="ec-pago" style="width:100%;border:2px solid #e9d5ff;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;">
+              ${['Efectivo','Transferencia','Débito','Crédito'].map(op=>
+                `<option ${(ped.pago||'')==op?'selected':''}>${op}</option>`
+              ).join('')}
+            </select>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:#7c3aed;display:block;margin-bottom:4px;">Notas</label>
+            <textarea id="ec-notas" rows="2"
+              style="width:100%;border:2px solid #e9d5ff;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;resize:none;">${ped.notas||''}</textarea>
+          </div>
+        </div>
+        <button onclick="guardarDatosCliente('${pedidoId}')"
+          style="width:100%;padding:14px;background:linear-gradient(135deg,#7c3aed,#ec4899);
+          color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;
+          cursor:pointer;font-family:inherit;margin-bottom:10px;">
+          💾 Guardar cambios
+        </button>
+        <button onclick="document.getElementById('editClienteModal').remove()"
+          style="width:100%;padding:12px;background:#f3f4f6;color:#6b7280;
+          border:none;border-radius:12px;font-size:14px;cursor:pointer;font-family:inherit;">
+          Cancelar
+        </button>
+      </div>`;
+    modal.addEventListener('click', e=>{ if(e.target===modal) modal.remove(); });
+    document.body.appendChild(modal);
+  }
+
+  async function guardarDatosCliente(pedidoId){
+    const ped = misPedidos.find(p=>p.id===pedidoId);
+    if(!ped) return;
+    const nombre = document.getElementById('ec-nombre').value.trim();
+    const tel    = document.getElementById('ec-tel').value.trim();
+    const dir    = document.getElementById('ec-dir').value.trim();
+    const pago   = document.getElementById('ec-pago').value;
+    const notas  = document.getElementById('ec-notas').value.trim();
+    if(!nombre){ toast('⚠️ El nombre no puede estar vacío'); return; }
+    try{
+      const upd = {nombre_cliente:nombre, telefono:tel, direccion:dir, pago, notas};
+      await sPatch('pedidos', `id=eq.${pedidoId}`, upd);
+      // Actualizar en memoria
+      Object.assign(ped, upd);
+      ped._nombre = nombre;
+      // Actualizar también en tabla clientes si tiene cliente_id
+      if(ped.cliente_id){
+        await sPatch('clientes', `id=eq.${ped.cliente_id}`, {nombre, telefono:tel, direccion:dir}).catch(()=>{});
+      }
+      toast('✅ Datos actualizados');
+      document.getElementById('editClienteModal').remove();
+      renderPedidos(misPedidos); // refrescar lista
+    }catch(e){ toast('❌ '+e.message); }
   }
 
   // Cuando la vendedora cambia el nombre de un ítem, busca en catálogo y sugiere precio
