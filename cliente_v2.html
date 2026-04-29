@@ -417,25 +417,22 @@
   
     /* ── HOTSPOTS sobre el folleto ───────────────────────── */
     .hs-btn {
-      position: absolute;
       width: 38px; height: 38px;
       border-radius: 50%;
       background: linear-gradient(135deg, #7c3aed, #ec4899);
       border: 3px solid white;
       color: white;
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 900;
       display: flex; align-items: center; justify-content: center;
       cursor: pointer;
       box-shadow: 0 3px 12px rgba(124,58,237,.6);
-      transform: translate(-50%, -50%);
       transition: transform .15s, box-shadow .15s;
       pointer-events: all;
-      z-index: 10;
       animation: hsPulse 2s ease-in-out infinite;
     }
     .hs-btn:hover, .hs-btn:active {
-      transform: translate(-50%, -50%) scale(1.2);
+      transform: scale(1.2);
       box-shadow: 0 6px 20px rgba(124,58,237,.8);
       animation: none;
     }
@@ -891,6 +888,7 @@
     const campNum = campanaParam || '6';
     await cargarCatalogo(campNum);
     await cargarHotspots(campNum);
+    console.log('Hotspots cargados:', _hotspots.length, 'para campaña', campNum);
 
     // Cargar folleto PDF DESPUÉS (para que el catálogo ya esté disponible cuando renderice)
     await cargarFolleto();
@@ -1712,8 +1710,12 @@
 
   function renderHotspots(pagina){
     const overlay = document.getElementById('hotspots-overlay');
-    if(!overlay) return;
+    if(!overlay){ console.warn('hotspots-overlay no encontrado'); return; }
+    console.log(`renderHotspots pág ${pagina}: ${_hotspots.length} total, filtrando...`);
     const pagHs = _hotspots.filter(hs => Number(hs.pagina) === Number(pagina));
+    console.log(`  → ${pagHs.length} hotspots para esta página`);
+    // Asegurar pointer-events en los botones aunque el padre sea none
+    overlay.style.pointerEvents = 'none';
     overlay.innerHTML = pagHs.map(hs => {
       // Detectar si es un grupo
       const esGrupo = hs.codigo === 'GRUPO';
@@ -1727,12 +1729,16 @@
       const titulo = esGrupo
         ? `Grupo: ${grupo.map(g=>g.nombre).join(', ').substring(0,60)}`
         : `${hs.codigo} — ${hs.nombre||''}`;
-      return `<button class="hs-btn"
-        style="left:${hs.pos_x}%;top:${hs.pos_y}%;${enCarrito?'background:linear-gradient(135deg,#059669,#10b981);':''}"
-        onclick="abrirHsPopup(event,'${hs.codigo}','${encodeURIComponent(hs.nombre||'')}')"
-        title="${titulo}">
-        ${icon}
-      </button>`;
+      const icono = esGrupo ? '🛒' : (enCarrito ? '✅' : '🛒');
+      return `<div style="position:absolute;left:${hs.pos_x}%;top:${hs.pos_y}%;
+        transform:translate(-50%,-50%);z-index:20;pointer-events:all;">
+        <button class="hs-btn"
+          style="${enCarrito?'background:linear-gradient(135deg,#059669,#10b981);':''}"
+          onclick="abrirHsPopup(event,'${hs.codigo}','${encodeURIComponent(hs.nombre||'')}')"
+          title="${titulo}">
+          ${icono}
+        </button>
+      </div>`;
     }).join('');
   }
 
