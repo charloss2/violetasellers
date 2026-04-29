@@ -1391,21 +1391,20 @@ function copiarSQL(){navigator.clipboard.writeText(document.getElementById('sqlC
   function hsBuscarProducto(q){
     if(!q.trim()){ document.getElementById('hs-resultados').innerHTML=''; return; }
     const qL = q.toLowerCase().trim();
-    // Filtrar por campaña con múltiples variantes del formato
-    const campNum = _hsCampana ? _hsCampana.replace(/[^0-9]/g,'').replace(/^0/,'') : '';
+    // Extraer número de campaña para comparar flexible
+    const campNum = _hsCampana ? String(_hsCampana).replace(/[^0-9]/g,'').replace(/^0+/,'') : '';
     const hits = allProds.filter(p=>{
-      // Filtro de campaña flexible
+      // Filtro de campaña flexible — comparar solo números
       if(campNum){
-        const pCampNum = (p.campana||'').replace(/[^0-9]/g,'').replace(/^0/,'');
-        if(pCampNum && !pCampNum.startsWith(campNum) && !campNum.startsWith(pCampNum)) return false;
+        const pNum = String(p.campana||'').replace(/[^0-9]/g,'').replace(/^0+/,'');
+        if(pNum && !pNum.startsWith(campNum) && !campNum.startsWith(pNum)) return false;
       }
-      // Búsqueda por nombre o código
       return p.nombre.toLowerCase().includes(qL) || String(p.codigo||'').includes(qL);
     }).slice(0,15);
 
     const div = document.getElementById('hs-resultados');
     if(!hits.length){
-      div.innerHTML='<div style="padding:12px;color:#9ca3af;font-size:13px;">Sin resultados para "'+q+'"</div>';
+      div.innerHTML=`<div style="padding:12px;color:#9ca3af;font-size:13px;">Sin resultados para "${q}"</div>`;
       return;
     }
     div.innerHTML = hits.map(p=>`
@@ -1419,9 +1418,7 @@ function copiarSQL(){navigator.clipboard.writeText(document.getElementById('sqlC
         <button onclick="hsAgregarAlGrupo('${p.codigo}','${encodeURIComponent(p.nombre)}')"
           style="background:#ede9fe;color:#7c3aed;border:none;border-radius:6px;
           padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;
-          font-family:inherit;">
-          + Grupo
-        </button>
+          font-family:inherit;">+ Grupo</button>
       </div>`).join('');
   }
 
